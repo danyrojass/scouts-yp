@@ -1,0 +1,76 @@
+<div class="container">
+  <div class="page-header">
+    <h1>{{ isEditing ? 'Editar' : 'Crear' }} Sección</h1>
+  </div>
+
+  <div class="form-container">
+    @if (errorMessage) {
+      <app-alert
+        [type]="'error'"
+        [message]="errorMessage"
+        (dismiss)="errorMessage = ''">
+      </app-alert>
+    }
+    <form (ngSubmit)="onSubmit()" [formGroup]="setForm">
+      <div class="form-group">
+        <label class="form-label" for="name">Nombre de la Sección</label>
+        <input
+          [class.invalid]="setForm.get('name')?.invalid && setForm.get('name')?.touched"
+          class="form-control"
+          formControlName="name"
+          id="name"
+          type="text"
+        />
+        @if (setForm.get('name')?.invalid && setForm.get('name')?.touched) {
+          @if (setForm.get('name')?.errors?.['required']) {
+            <div class="form-error">
+              <span>El nombre del set es obligatorio</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="type">Tipo de Sección</label>
+        <select class="form-control" formControlName="type" id="type">
+          @for (type of setTypes; track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="groupId">Grupo Scout</label>
+        <select
+          [class.invalid]="setForm.get('groupId')?.invalid && setForm.get('groupId')?.touched"
+          class="form-control"
+          formControlName="groupId"
+          id="groupId"
+        >
+          <option value="">-- Selecciona un grupo --</option>
+          @for (group of groups; track group.id) {
+            <option [value]="group.id">{{ group.name }} ({{ group.number }})</option>
+          }
+        </select>
+        @if (setForm.get('groupId')?.invalid && setForm.get('groupId')?.touched) {
+          @if (setForm.get('groupId')?.errors?.['required']) {
+            <div class="form-error">
+              <span>La selección de grupo es obligatoria</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-actions">
+        <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
+        <button [disabled]="setForm.invalid || isLoading" class="btn btn-primary" type="submit">
+          @if (isLoading) {
+            <app-loading-spinner size="sm"></app-loading-spinner>
+          } @else {
+            <span>{{ isEditing ? 'Editar' : 'Crear' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

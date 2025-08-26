@@ -1,0 +1,83 @@
+<div class="container">
+  <div class="page-header">
+    <h1>{{ isEditing() ? 'Editar' : 'Crear' }} Grupo Scout</h1>
+  </div>
+
+  <div class="form-container">
+    @if (errorMessage()) {
+      <app-alert
+        [type]="'error'"
+        [message]="errorMessage"
+        (dismiss)="errorMessage.set('')">
+      </app-alert>
+    }
+
+    <form [formGroup]="groupForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label" for="name">Nombre del grupo</label>
+        <input
+          formControlName="name"
+          id="name"
+          type="text"
+          class="form-control"
+          [class.invalid]="groupForm.get('name')?.invalid && groupForm.get('name')?.touched"
+        />
+        @if (groupForm.get('name')?.invalid && groupForm.get('name')?.touched) {
+          @if (groupForm.get('name')?.errors?.['required']) {
+            <div class="form-error">
+              <span>El nombre del grupo es obligatorio</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="number">Número del grupo</label>
+        <input
+          formControlName="number"
+          id="number"
+          type="text"
+          class="form-control"
+          [class.invalid]="groupForm.get('number')?.invalid && groupForm.get('number')?.touched"
+        />
+        @if (groupForm.get('number')?.invalid && groupForm.get('number')?.touched) {
+          @if (groupForm.get('number')?.errors?.['required']) {
+            <div class="form-error">
+              <span>El número del grupo es obligatorio</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="city">Ciudad</label>
+        <input
+          formControlName="city"
+          id="city"
+          type="text"
+          class="form-control"
+          [class.invalid]="groupForm.get('city')?.invalid && groupForm.get('city')?.touched"
+        />
+        @if (groupForm.get('city')?.invalid && groupForm.get('city')?.touched) {
+          @if (groupForm.get('city')?.errors?.['required']) {
+            <div class="form-error">
+              <span>La ciudad es obligatoria</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary" type="button" (click)="onCancel()">Cancelar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="groupForm.invalid || isLoading">
+          @if (isLoading()) {
+            <app-loading-spinner size="sm"></app-loading-spinner>
+          }
+          @if (!isLoading()) {
+            <span>{{ isEditing() ? 'Actualizar' : 'Crear' }}</span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

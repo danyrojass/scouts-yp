@@ -1,0 +1,10 @@
+@if (message) {
+  <div class="alert" [class]="'alert-' + type">
+    <div class="alert-content">
+      <span class="alert-message">{{ message }}</span>
+      @if (dismissible) {
+        <button class="alert-close" (click)="onDismiss()">&times;</button>
+      }
+    </div>
+  </div>
+}
