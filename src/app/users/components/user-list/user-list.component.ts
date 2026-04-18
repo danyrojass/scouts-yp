@@ -40,7 +40,6 @@ export class UserListComponent {
     private router = inject(NavigationService);
 
     onNewUser(): void {
-        console.log('Navigating to new user');
         this.router.navigate(['/users/new']);
     }
 
