@@ -1,0 +1,201 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <h2 class="auth-title">Registro</h2>
+
+    @if (errorMessage()) {
+      <app-alert
+        [type]="'error'"
+        [message]="errorMessage"
+        (dismiss)="dismissError()">
+      </app-alert>
+    }
+
+    <form (ngSubmit)="onSubmit()" [formGroup]="registerForm" class="auth-form">
+      <div class="form-group">
+        <label class="form-label" for="name">Nombre completo</label>
+        <input
+          [class.invalid]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
+          class="form-control"
+          formControlName="name"
+          id="name"
+          type="text"
+        />
+        @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
+          @if (registerForm.get('name')?.errors?.['required']) {
+            <div class="form-error">
+              <span>El nombre es obligatorio</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Correo electrónico</label>
+        <input
+          [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+          class="form-control"
+          formControlName="email"
+          id="email"
+          type="email"
+        />
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          @if (registerForm.get('email')?.errors?.['required']) {
+            <div class="form-error">
+              <span>El correo electrónico es obligatorio</span>
+            </div>
+          }
+          @if (registerForm.get('email')?.errors?.['email']) {
+            <div class="form-error">
+              <span>Ingrese un correo electrónico válido</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <input
+          [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+          class="form-control"
+          formControlName="password"
+          id="password"
+          type="password"
+        />
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          @if (registerForm.get('password')?.errors?.['required']) {
+            <div class="form-error">
+              <span>La contraseña es obligatoria</span>
+            </div>
+          }
+          @if (registerForm.get('password')?.errors?.['minlength']) {
+            <div class="form-error">
+              <span>La contraseña debe tener al menos 6 caracteres</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dateOfBirth">Fecha de nacimiento</label>
+        <input
+          [class.invalid]="registerForm.get('dateOfBirth')?.invalid && registerForm.get('dateOfBirth')?.touched"
+          class="form-control"
+          formControlName="dateOfBirth"
+          id="dateOfBirth"
+          type="date"
+        />
+        @if (registerForm.get('dateOfBirth')?.invalid && registerForm.get('dateOfBirth')?.touched) {
+          @if (registerForm.get('dateOfBirth')?.errors?.['required']) {
+            <div class="form-error">
+              <span>La fecha de nacimiento es obligatoria</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="type">Tipo de usuario</label>
+        <select class="form-control" formControlName="type" id="type">
+          @for (type of userTypes(); track type) {
+            <option [value]="type">{{ type }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="level">Nivel Scout</label>
+        <select class="form-control" formControlName="level" id="level">
+          @for (level of userLevels(); track level) {
+            <option [value]="level">{{ level }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="groupId">Grupo Scout</label>
+        <select class="form-control" formControlName="groupId" id="groupId">
+          <option value="">-- Selecciona un grupo --</option>
+          @for (group of groups(); track group.id) {
+            <option [value]="group.id">{{ group.name }} ({{ group.number }})</option>
+          }
+          <option value="new">Crear un nuevo grupo</option>
+        </select>
+      </div>
+
+      @if (createNewGroup()) {
+        <div formGroupName="newGroup" class="new-group-form slide-in">
+          <h4>Nuevo grupo scout</h4>
+
+          <div class="form-group">
+            <label for="groupName" class="form-label">Nombre del grupo</label>
+            <input
+              type="text"
+              id="groupName"
+              formControlName="name"
+              class="form-control"
+              [class.invalid]="registerForm.get('newGroup.name')?.invalid && registerForm.get('newGroup.name')?.touched"
+            />
+            @if (registerForm.get('newGroup.name')?.invalid && registerForm.get('newGroup.name')?.touched) {
+              @if (registerForm.get('newGroup.name')?.errors?.['required']) {
+                <div class="form-error">
+                  <span>El nombre del grupo es obligatorio</span>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="groupNumber" class="form-label">Número del grupo</label>
+            <input
+              type="text"
+              id="groupNumber"
+              formControlName="number"
+              class="form-control"
+              [class.invalid]="registerForm.get('newGroup.number')?.invalid && registerForm.get('newGroup.number')?.touched"
+            />
+            @if (registerForm.get('newGroup.number')?.invalid && registerForm.get('newGroup.number')?.touched) {
+              @if (registerForm.get('newGroup.number')?.errors?.['required']) {
+                <div class="form-error">
+                  <span>El número del grupo es obligatorio</span>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="groupCity" class="form-label">Ciudad</label>
+            <input
+              type="text"
+              id="groupCity"
+              formControlName="city"
+              class="form-control"
+              [class.invalid]="registerForm.get('newGroup.city')?.invalid && registerForm.get('newGroup.city')?.touched"
+            />
+            @if (registerForm.get('newGroup.city')?.invalid && registerForm.get('newGroup.city')?.touched) {
+              @if (registerForm.get('newGroup.city')?.errors?.['required']) {
+                <div class="form-error">
+                  <span>La ciudad es obligatoria</span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+      <button
+        [disabled]="registerForm.invalid || isLoading()"
+        class="btn btn-primary btn-block"
+        type="submit"
+      >
+        @if (isLoading()) {
+          <app-loading-spinner size="sm"></app-loading-spinner>
+        } @else {
+          <span>Registrar</span>
+        }
+      </button>
+    </form>
+
+    <div class="auth-alt">
+      <p>¿Ya tienes una cuenta? <a routerLink="/login">Iniciar sesión</a></p>
+    </div>
+  </div>
+</div>

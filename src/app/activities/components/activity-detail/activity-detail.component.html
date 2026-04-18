@@ -1,0 +1,49 @@
+<div class="container">
+  @if (isLoading) {
+    <div class="loading-container">
+      <app-loading-spinner size="lg"></app-loading-spinner>
+    </div>
+  }
+
+  @if (isLoading && activity) {
+    <div class="page-header">
+      <h1>{{ activity.name }}</h1>
+      @if (currentUser?.type === UserType.JEFE) {
+        <div class="header-actions">
+          <button class="btn btn-secondary mr-2" (click)="onEdit()">Editar</button>
+          <button class="btn btn-error" (click)="onDelete()">Borrar</button>
+        </div>
+      }
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-header">
+        <span class="badge badge-primary">{{ activity.level }}</span>
+        <span class="badge badge-secondary">{{ activity.points }} Puntos</span>
+      </div>
+
+      <div class="detail-body">
+        <div class="detail-row">
+          <strong>Clave:</strong>
+          <span>{{ activity.key }}</span>
+        </div>
+        <div class="detail-row">
+          <strong>Creado:</strong>
+          <span>{{ activity.createdAt | date:'medium' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" (click)="onBack()">Regresar</button>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <app-alert
+      [type]="'error'"
+      [message]="errorMessage"
+      (dismiss)="errorMessage = ''">
+    </app-alert>
+  }
+</div>

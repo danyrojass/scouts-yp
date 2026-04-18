@@ -1,0 +1,41 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Secciones</h1>
+    @if (currentUser?.type === UserType.JEFE) {
+      <button class="btn btn-primary" (click)="onCreateSet()">Crear Sección</button>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <app-loading-spinner size="lg"></app-loading-spinner>
+    </div>
+  } @else {
+    <div class="card-grid">
+      @for (set of sets; track set.id) {
+        <div class="card">
+          <div class="card-header">
+            <h3>{{ set.name }}</h3>
+            <span class="badge badge-secondary">{{ set.type }}</span>
+          </div>
+          <div class="card-body">
+            <p><strong>Creado:</strong> {{ set.createdAt | date }}</p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-secondary" (click)="onViewSet(set.id!)">Ver</button>
+            @if (currentUser?.type === UserType.JEFE) {
+              <button class="btn btn-primary" (click)="onEditSet(set.id!)">Editar</button>
+              <button class="btn btn-error" (click)="onDeleteSet(set.id!)">Borrar</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (!isLoading && sets.length === 0) {
+    <div class="empty-state">
+      <p>No se encontraron secciones.</p>
+    </div>
+  }
+</div>

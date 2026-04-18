@@ -1,0 +1,37 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Users</h1>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <app-loading-spinner size="lg"></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!isLoading" class="card-grid">
+    <div *ngFor="let user of users" class="card">
+      <div class="card-header">
+        <h3>{{ user.name }}</h3>
+        <div class="badge-container">
+          <span [ngClass]="{'badge-primary': user.type === UserType.BENEFICIARIO, 'badge-accent': user.type === UserType.JEFE}"
+                class="badge">
+            {{ user.type }}
+          </span>
+          <span class="badge badge-secondary">{{ user.level }}</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Date of Birth:</strong> {{ user.dateOfBirth | date }}</p>
+      </div>
+      <div *ngIf="currentUser?.type === UserType.JEFE" class="card-footer">
+        <button (click)="onViewUser(user.id)" class="btn btn-secondary">View</button>
+        <button (click)="onEditUser(user.id)" class="btn btn-primary">Edit</button>
+        <button (click)="onDeleteUser(user.id)" class="btn btn-error">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading && users.length === 0" class="empty-state">
+    <p>No users found.</p>
+  </div>
+</div>
