@@ -1,60 +1,62 @@
-import {Component, OnInit, signal} from '@angular/core';
+import {Component, effect, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {AuthService} from '../../services/auth.service';
-import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
+import {AlertComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 
 @Component({
-  selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, AlertComponent, LoadingSpinnerComponent],
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+    selector: 'app-login',
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, RouterModule, AlertComponent],
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
+export class LoginComponent {
 
-  // signals en lugar de boolean/string
-  isLoading = signal(false);
-  errorMessage = signal('');
+    private fb = inject(FormBuilder);
+    private authService = inject(AuthService);
+    private router = inject(NavigationService);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: NavigationService
-  ) {
-  }
+    isLoading = signal(false);
+    errorMessage = signal('');
 
-  ngOnInit(): void {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+    loginForm = this.fb.nonNullable.group({
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(6)]]
     });
-  }
 
-  onSubmit(): void {
-    if (this.loginForm.invalid) return;
+    constructor() {
+        effect(() => {
+            const user = this.authService.user();
 
-    this.isLoading.set(true);
-    this.errorMessage.set('');
+            if (user) {
+                this.isLoading.set(false);
+                this.router.navigate(['/dashboard']);
+            }
+        });
+    }
 
-    const {email, password} = this.loginForm.value;
+    onSubmit(): void {
+        if (this.loginForm.invalid) return;
 
-    this.authService.login(email, password).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.router.navigate(['/dashboard']);
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(error.message || 'Error al iniciar sesión. Intente nuevamente.');
-      }
-    });
-  }
+        this.isLoading.set(true);
+        this.errorMessage.set('');
 
-  dismissError(): void {
-    this.errorMessage.set('');
-  }
+        const {email, password} = this.loginForm.getRawValue();
+
+        this.authService.login(email, password).subscribe({
+            error: err => {
+                this.isLoading.set(false);
+                this.errorMessage.set(
+                    err?.message ?? 'Error al iniciar sesión'
+                );
+            }
+        });
+    }
+
+    dismissError(): void {
+        this.errorMessage.set('');
+    }
 }

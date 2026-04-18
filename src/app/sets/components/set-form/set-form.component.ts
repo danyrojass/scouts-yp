@@ -1,121 +1,110 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
 import {SetService} from '../../services/set.service';
 import {GroupService} from '../../../groups/services/group.service';
 import {Set, SetType} from '../../models';
-import {Group} from '../../../groups/models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {toSignal} from "@angular/core/rxjs-interop";
+import {catchError, filter, map, of, switchMap} from "rxjs";
 
 @Component({
-  selector: 'app-set-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AlertComponent, LoadingSpinnerComponent],
-  templateUrl: './set-form.component.html',
-  styleUrls: ['./set-form.component.css']
+    selector: 'app-set-form',
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, AlertComponent, LoadingSpinnerComponent],
+    templateUrl: './set-form.component.html',
+    styleUrls: [
+        './set-form.component.css',
+        '../../../shared/styles/form-card.css'
+    ]
 })
-export class SetFormComponent implements OnInit {
-  setForm!: FormGroup;
-  isLoading: boolean = false;
-  isEditing: boolean = false;
-  setId: string | null = null;
-  errorMessage: string = '';
-  groups: Group[] = [];
+export class SetFormComponent {
 
-  setTypes: string[] = Object.values(SetType);
-
-  constructor(
-    private fb: FormBuilder,
-    private setService: SetService,
-    private groupService: GroupService,
-    private router: NavigationService,
-    private route: ActivatedRoute
-  ) {
-  }
-
-  ngOnInit(): void {
-    this.initForm();
-    this.loadGroups();
-
-    this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.isEditing = true;
-        this.setId = params['id'];
-        this.loadSet(this.setId);
-      }
+    setTypes: string[] = Object.values(SetType);
+    isLoading = signal(false);
+    errorMessage = signal('');
+    isEditing = signal(false);
+    setId = signal<string | null>(null);
+    private fb = inject(FormBuilder);
+    setForm: FormGroup<{
+        name: FormControl<string>;
+        type: FormControl<SetType>;
+        groupId: FormControl<string>;
+    }> = this.fb.group({
+        name: this.fb.control('', {nonNullable: true, validators: [Validators.required]}),
+        type: this.fb.control(SetType.SEISENA, {nonNullable: true, validators: [Validators.required]}),
+        groupId: this.fb.control('', {nonNullable: true, validators: [Validators.required]})
     });
-  }
+    private setService = inject(SetService);
+    private groupService = inject(GroupService);
+    groups = toSignal(this.groupService.getGroups(), {initialValue: []});
+    private router = inject(NavigationService);
+    private route = inject(ActivatedRoute);
+    set = toSignal(
+        this.route.paramMap.pipe(
+            map(params => params.get('id')),
+            filter((id): id is string => id !== null),
+            switchMap(id => {
+                this.isEditing.set(true);
+                this.setId.set(id);
+                this.isLoading.set(true);
+                return this.setService.getSetById(id).pipe(
+                    map(activity => {
+                        if (activity) {
+                            this.setForm.patchValue(activity);
+                        }
+                        this.isLoading.set(false);
+                        return activity;
+                    }),
+                    catchError(err => {
+                        console.error('Error al cargar la sección:', err);
+                        this.errorMessage.set('Ocurrió un error al cargar la sección');
+                        this.isLoading.set(false);
+                        return of(null);
+                    })
+                );
+            })
+        ),
+        {initialValue: null}
+    );
 
-  initForm(): void {
-    this.setForm = this.fb.group({
-      name: ['', [Validators.required]],
-      type: [SetType.SEISENA, [Validators.required]],
-      groupId: ['', [Validators.required]]
-    });
-  }
+    async onSubmit(): Promise<void> {
+        if (this.setForm.invalid) {
+            this.errorMessage.set('Por favor completa todos los campos requeridos.');
+            return;
+        }
 
-  loadGroups(): void {
-    this.groupService.getGroups().subscribe(groups => {
-      this.groups = groups;
-    });
-  }
+        this.isLoading.set(true);
+        this.errorMessage.set('');
 
-  loadSet(id: string | null): void {
-    this.isLoading = true;
-    this.setService.getSetById(id).subscribe({
-      next: (set: Set): void => {
-        this.setForm.patchValue(set);
-        this.isLoading = false;
-      },
-      error: (error): void => {
-        console.error('Error al cargar la sección:', error);
-        this.errorMessage = 'Ocurrió un error al cargar la sección';
-        this.isLoading = false;
-      }
-    });
-  }
+        const setData: Set = {
+            ...this.setForm.getRawValue(),
+            createdAt: new Date()
+        };
 
-  onSubmit(): void {
-    if (this.setForm.invalid) {
-      return;
+        try {
+            if (this.isEditing() && this.setId()) {
+                await this.setService.updateSet(this.setId()!, setData);
+            } else {
+                await this.setService.createSet(setData);
+            }
+
+            this.router.navigate(['/sets']);
+        } catch (error) {
+            console.error(error);
+            this.errorMessage.set(
+                this.isEditing()
+                    ? 'Ocurrió un error al editar la sección'
+                    : 'Ocurrió un error al crear la sección'
+            );
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
-
-    const setData: Set = {
-      ...this.setForm.value,
-      createdAt: new Date()
-    };
-
-    if (this.isEditing && this.setId) {
-      this.setService.updateSet(this.setId, setData).subscribe({
-        next: () => {
-          this.router.navigate(['/sets']);
-        },
-        error: (error) => {
-          console.error('Error al editar la sección:', error);
-          this.errorMessage = 'Ocurrió un error al editar la sección';
-          this.isLoading = false;
-        }
-      });
-    } else {
-      this.setService.createSet(setData).subscribe({
-        next: () => {
-          this.router.navigate(['/sets']);
-        },
-        error: (error) => {
-          console.error('Error al crear la sección:', error);
-          this.errorMessage = 'Ocurrió un error al crear la sección';
-          this.isLoading = false;
-        }
-      });
+    onCancel(): void {
+        this.router.navigate(['/sets']);
     }
-  }
-
-  onCancel(): void {
-    this.router.navigate(['/sets']);
-  }
 }

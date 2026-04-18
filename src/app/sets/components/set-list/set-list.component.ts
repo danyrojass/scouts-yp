@@ -1,75 +1,75 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {SetService} from '../../services/set.service';
 import {AuthService} from '../../../auth/services/auth.service';
-import {Set} from '../../models';
-import {User, UserType} from '../../../users/models';
+import {UserType} from '../../../users/models';
 import {LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {toSignal} from "@angular/core/rxjs-interop";
+import {catchError, map, of, tap} from "rxjs";
+import {Set} from "../../models";
 
 @Component({
-  selector: 'app-set-list',
-  standalone: true,
-  imports: [CommonModule, LoadingSpinnerComponent],
-  templateUrl: './set-list.component.html',
-  styleUrls: ['./set-list.component.css']
+    selector: 'app-set-list',
+    standalone: true,
+    imports: [CommonModule, LoadingSpinnerComponent],
+    templateUrl: './set-list.component.html',
+    styleUrls: [
+        './set-list.component.css',
+        '../../../shared/styles/list-card.css'
+    ]
 })
-export class SetListComponent implements OnInit {
-  sets: Set[] = [];
-  currentUser: User | null = null;
-  isLoading: boolean = true;
-  protected readonly UserType = UserType;
+export class SetListComponent {
 
-  constructor(
-    private setService: SetService,
-    private authService: AuthService,
-    private router: NavigationService
-  ) {
-  }
+    isLoading = signal(true);
+    errorMessage = signal('');
+    protected readonly UserType = UserType;
+    private router = inject(NavigationService);
+    private authService = inject(AuthService);
+    currentUser = this.authService.user;
+    private setService = inject(SetService);
+    private currentUserValue = this.authService.user;
 
-  ngOnInit(): void {
-    this.loadSets();
-    this.authService.getCurrentUser().subscribe(user => {
-      this.currentUser = user;
-    });
-  }
+    sets = toSignal(
+        this.setService.getSets().pipe(
+            map(sets => {
+                const user = this.currentUserValue();
+                if (user?.type === UserType.JEFE) return sets;
+                return sets.filter(s => s.groupId === user?.groupId);
+            }),
+            tap(() => this.isLoading.set(false)),
+            catchError(err => {
+                console.error('Error al cargar las secciones:', err);
+                this.errorMessage.set('Ocurrió un error al cargar las secciones');
+                this.isLoading.set(false);
+                return of([] as Set[]);
+            })
+        ),
+        {initialValue: []}
+    );
 
-  loadSets(): void {
-    this.isLoading = true;
-    this.setService.getSets().subscribe({
-      next: (sets): void => {
-        this.sets = sets;
-        this.isLoading = false;
-      },
-      error: (error): void => {
-        console.error('Error loading sets:', error);
-        this.isLoading = false;
-      }
-    });
-  }
-
-  onCreateSet(): void {
-    this.router.navigate(['/sets/new']);
-  }
-
-  onViewSet(id: string): void {
-    this.router.navigate(['/sets', id]);
-  }
-
-  onEditSet(id: string): void {
-    this.router.navigate(['/sets/edit', id]);
-  }
-
-  onDeleteSet(id: string): void {
-    if (confirm('Are you sure you want to delete this set?')) {
-      this.setService.deleteSet(id).subscribe({
-        next: (): void => {
-          this.loadSets();
-        },
-        error: (error): void => {
-          console.error('Error deleting set:', error);
-        }
-      });
+    onCreateSet(): void {
+        this.router.navigate(['/sets/new']);
     }
-  }
+
+    onViewSet(id: string): void {
+        this.router.navigate(['/sets', id]);
+    }
+
+    onEditSet(id: string): void {
+        this.router.navigate(['/sets/edit', id]);
+    }
+
+    onDeleteSet(id: string): void {
+        if (!confirm('¿Estás seguro de borrar esta sección?')) return;
+
+        this.setService.deleteSet(id)
+            .then(() => {
+                console.log('Sección borrada correctamente');
+            })
+            .catch(err => {
+                console.error('Error al borrar la sección:', err);
+                this.errorMessage.set('Ocurrió un error al borrar la sección');
+            });
+    }
 }

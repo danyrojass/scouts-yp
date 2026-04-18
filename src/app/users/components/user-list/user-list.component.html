@@ -1,37 +1,94 @@
 <div class="container">
-  <div class="page-header">
-    <h1>Users</h1>
-  </div>
-
-  <div *ngIf="isLoading" class="loading-container">
-    <app-loading-spinner size="lg"></app-loading-spinner>
-  </div>
-
-  <div *ngIf="!isLoading" class="card-grid">
-    <div *ngFor="let user of users" class="card">
-      <div class="card-header">
-        <h3>{{ user.name }}</h3>
-        <div class="badge-container">
-          <span [ngClass]="{'badge-primary': user.type === UserType.BENEFICIARIO, 'badge-accent': user.type === UserType.JEFE}"
-                class="badge">
-            {{ user.type }}
-          </span>
-          <span class="badge badge-secondary">{{ user.level }}</span>
+    <div class="users-page">
+        <div class="page-header">
+            <div class="page-title">
+                <h1>Usuarios</h1>
+                <p>Gestiona los usuarios del sistema</p>
+            </div>
+            @if (currentUser()?.type === UserType.JEFE) {
+                <button class="btn btn-primary" (click)="onNewUser()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nuevo usuario
+                </button>
+            }
         </div>
-      </div>
-      <div class="card-body">
-        <p><strong>Email:</strong> {{ user.email }}</p>
-        <p><strong>Date of Birth:</strong> {{ user.dateOfBirth | date }}</p>
-      </div>
-      <div *ngIf="currentUser?.type === UserType.JEFE" class="card-footer">
-        <button (click)="onViewUser(user.id)" class="btn btn-secondary">View</button>
-        <button (click)="onEditUser(user.id)" class="btn btn-primary">Edit</button>
-        <button (click)="onDeleteUser(user.id)" class="btn btn-error">Delete</button>
-      </div>
-    </div>
-  </div>
 
-  <div *ngIf="!isLoading && users.length === 0" class="empty-state">
-    <p>No users found.</p>
-  </div>
+        @if (isLoading()) {
+            <div class="loading-container">
+                <app-loading-spinner size="lg"></app-loading-spinner>
+            </div>
+        }
+
+        @if (!isLoading() && users().length > 0) {
+            <div class="data-card">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Tipo</th>
+                                <th>Nivel</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (user of users(); track user.id) {
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar">
+                                                {{ user.name.charAt(0) }}{{ user.name.split(' ').pop()?.charAt(0) }}
+                                            </div>
+                                            <div class="user-info">
+                                                <h4>{{ user.name }}</h4>
+                                                <p>{{ user.email }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge" 
+                                              [class.badge-accent]="user.type === UserType.JEFE"
+                                              [class.badge-primary]="user.type === UserType.BENEFICIARIO">
+                                            {{ user.type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-secondary">{{ user.level }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button (click)="onViewUser(user.id!)" class="btn-icon" title="Ver">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </button>
+                                            @if (currentUser()?.type === UserType.JEFE) {
+                                                <button (click)="onEditUser(user.id!)" class="btn-icon" title="Editar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                </button>
+                                                <button (click)="onDeleteUser(user.id!)" class="btn-icon danger" title="Eliminar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (!isLoading() && users().length === 0) {
+            <div class="data-card">
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <h3>No hay usuarios</h3>
+                    <p>Comienza agregando tu primer usuario</p>
+                    @if (currentUser()?.type === UserType.JEFE) {
+                        <a routerLink="/users/new" class="btn btn-primary">Agregar usuario</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>

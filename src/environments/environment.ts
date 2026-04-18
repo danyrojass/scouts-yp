@@ -1,13 +1,12 @@
 export const environment = {
-  production: false,
-  firebase: {
-    apiKey: "AIzaSyBq6vEFI4g94JT5Vvq1N_mjfEDQqni6ciQ",
-    authDomain: "scouts-yp.firebaseapp.com",
-    databaseURL: "https://scouts-yp.firebaseio.com",
-    projectId: "scouts-yp",
-    storageBucket: "scouts-yp.firebasestorage.app",
-    messagingSenderId: "205508272377",
-    appId: "1:205508272377:web:c80143ff8f297d71110228",
-    measurementId: "G-89Q2QGN59F"
-  }
+    production: false,
+    firebase: {
+        apiKey: "AIzaSyCTVok0KrV_S8l5E-LNvsHrlpHgkyNhrZs",
+        authDomain: "scout-app-7b912.firebaseapp.com",
+        projectId: "scout-app-7b912",
+        storageBucket: "scout-app-7b912.firebasestorage.app",
+        messagingSenderId: "823584633196",
+        appId: "1:823584633196:web:eba2da82f22701905e0349",
+        measurementId: "G-47XS2TVW2H"
+    }
 };

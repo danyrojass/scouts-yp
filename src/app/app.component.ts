@@ -5,15 +5,15 @@ import {FooterComponent, NavbarComponent} from './shared/components';
 import {AuthService} from './auth/services/auth.service';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+    selector: 'app-root',
+    standalone: true,
+    imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.css'
 })
 export class App {
-  protected readonly title = signal('scouts-yp');
+    protected readonly title = signal('scouts-yp');
 
-  constructor(private authService: AuthService) {
-  }
+    constructor(private authService: AuthService) {
+    }
 }

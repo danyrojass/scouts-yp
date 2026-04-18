@@ -1,58 +1,95 @@
 <div class="container">
-  <div class="page-header">
-    <h1>Actividades</h1>
-    @if (currentUser?.type === UserType.JEFE) {
-      <button
-        class="btn btn-primary"
-        (click)="onCreateActivity()"
-      >
-        Crear Actividad
-      </button>
-    }
-  </div>
-
-  @if (isLoading) {
-    <div class="loading-container">
-      <app-loading-spinner size="lg"></app-loading-spinner>
-    </div>
-  } @else {
-    <div class="card-grid">
-      @for (activity of activities; track activity.id) {
-        <div class="card">
-          <div class="card-header">
-            <h3>{{ activity.name }}</h3>
-            <span class="badge badge-primary">{{ activity.level }}</span>
-          </div>
-          <div class="card-body">
-            <p><strong>Clave:</strong> {{ activity.key }}</p>
-            <p><strong>Puntos:</strong> {{ activity.points }}</p>
-          </div>
-          @if (currentUser?.type === 'Jefe') {
-            <div class="card-footer">
-              <button
-                class="btn btn-secondary mr-2"
-                (click)="onEditActivity(activity.id!)"
-              >
-                Editar
-              </button>
-              <button
-                class="btn btn-error"
-                (click)="onDeleteActivity(activity.id!)"
-              >
-                Borrar
-              </button>
+    <div class="activities-page">
+        <div class="page-header">
+            <div class="page-title">
+                <h1>Actividades</h1>
+                <p>Gestiona las actividades disponibles</p>
             </div>
-          }
+            @if (currentUser()?.type === UserType.JEFE) {
+                <button (click)="onCreateActivity()" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Nueva actividad
+                </button>
+            }
         </div>
-      }
+
+        @if (isLoading()) {
+            <div class="loading-container">
+                <app-loading-spinner size="lg"></app-loading-spinner>
+            </div>
+        }
+
+        @if (!isLoading() && activities().length > 0) {
+            <div class="data-card">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Actividad</th>
+                                <th>Nivel</th>
+                                <th>Puntos</th>
+                                <th>Fecha de creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (activity of activities(); track activity.id) {
+                                <tr>
+                                    <td>
+                                        <div class="activity-cell">
+                                            <div class="activity-icon">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                            </div>
+                                            <div class="activity-info">
+                                                <h4>{{ activity.name }}</h4>
+                                                <p>Clave: {{ activity.key }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-secondary">{{ activity.level }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="points-cell">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                            {{ activity.points }}
+                                        </div>
+                                    </td>
+                                    <td>{{ activity.createdAt | date:'dd/MM/yyyy' }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button (click)="onViewActivity(activity.id!)" class="btn-icon" title="Ver">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            </button>
+                                            @if (currentUser()?.type === UserType.JEFE) {
+                                                <button (click)="onEditActivity(activity.id!)" class="btn-icon" title="Editar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                </button>
+                                                <button (click)="onDeleteActivity(activity.id!)" class="btn-icon danger" title="Eliminar">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (!isLoading() && activities().length === 0) {
+            <div class="data-card">
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <h3>No hay actividades</h3>
+                    <p>Comienza agregando tu primera actividad</p>
+                    @if (currentUser()?.type === UserType.JEFE) {
+                        <button (click)="onCreateActivity()" class="btn btn-primary">Agregar actividad</button>
+                    }
+                </div>
+            </div>
+        }
     </div>
-  }
-
-
-  @if (!isLoading && activities.length === 0) {
-    <div class="empty-state">
-      <p>No se encontraron actividades.</p>
-    </div>
-  }
-
 </div>

@@ -1,70 +1,68 @@
-import {Component, OnInit, signal} from '@angular/core';
+import {Component, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
+import {toSignal} from '@angular/core/rxjs-interop';
 import {GroupService} from '../../services/group.service';
 import {AuthService} from '../../../auth/services/auth.service';
 import {Group} from '../../models';
-import {User, UserType} from '../../../users/models';
+import {UserType} from '../../../users/models';
 import {LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {catchError, of, tap} from 'rxjs';
 
 @Component({
-  selector: 'app-group-list',
-  standalone: true,
-  imports: [CommonModule, LoadingSpinnerComponent],
-  templateUrl: './group-list.component.html',
-  styleUrls: ['./group-list.component.css']
+    selector: 'app-group-list',
+    standalone: true,
+    imports: [CommonModule, LoadingSpinnerComponent],
+    templateUrl: './group-list.component.html',
+    styleUrls: [
+        './group-list.component.css',
+        './/../../../shared/styles/list-card.css'
+    ]
 })
-export class GroupListComponent implements OnInit {
-  groups: Group[] = [];
-  currentUser: User | null = null;
-  isLoading = signal(true);
-  protected readonly UserType = UserType;
+export class GroupListComponent {
 
-  constructor(
-    private groupService: GroupService,
-    private authService: AuthService,
-    private router: NavigationService
-  ) {
-  }
+    isLoading = signal(true);
+    errorMessage = signal('');
+    protected readonly UserType = UserType;
+    private router = inject(NavigationService);
+    private authService = inject(AuthService);
+    currentUser = this.authService.user;
+    private groupService = inject(GroupService);
+    groups = toSignal(
+        this.groupService.getGroups().pipe(
+            tap(() => this.isLoading.set(false)),
+            catchError(err => {
+                console.error('Error al cargar los grupos:', err);
+                this.errorMessage.set('Ocurrió un error al cargar los grupos');
+                this.isLoading.set(false);
+                return of([] as Group[]);
+            })
+        ),
+        {initialValue: []}
+    );
 
-  ngOnInit(): void {
-    this.loadGroups();
-    this.authService.getCurrentUser().subscribe(user => {
-      this.currentUser = user;
-    });
-  }
+    onCreateGroup(): void {
+        this.router.navigate(['/groups/new']);
+    }
 
-  loadGroups(): void {
-    this.isLoading.set(true);
-    this.groupService.getGroups().subscribe({
-      next: (groups): void => {
-        this.groups = groups;
-        this.isLoading.set(false);
-      },
-      error: (error): void => {
-        console.error('Error al cargar los grupos:', error);
-        this.isLoading.set(false);
-      }
-    });
-  }
+    onViewGroup(id: string): void {
+        this.router.navigate(['/groups', id]);
+    }
 
-  onCreateGroup(): void {
-    this.router.navigate(['/groups/new']);
-  }
+    onEditGroup(id: string): void {
+        this.router.navigate(['/groups/edit', id]);
+    }
 
-  onViewGroup(id: string): void {
-    this.router.navigate(['/groups', id]);
-  }
+    onDeleteGroup(id: string): void {
+        if (!confirm('¿Estás seguro de borrar este grupo?')) return;
 
-  onEditGroup(id: string): void {
-    this.router.navigate(['/groups/edit', id]);
-  }
-
-  onDeleteGroup(id: string): void {
-    if (!confirm('¿Estás seguro de borrar este grupo?')) return;
-
-    this.groupService.deleteGroup(id)
-      .then(() => this.loadGroups())
-      .catch(err => console.error('Error al borrar el grupo:', err));
-  }
+        this.groupService.deleteGroup(id)
+            .then(() => {
+                console.log('Grupo borrado correctamente');
+            })
+            .catch(err => {
+                console.error('Error al borrar el grupo:', err);
+                this.errorMessage.set('Ocurrió un error al borrar el grupo');
+            });
+    }
 }

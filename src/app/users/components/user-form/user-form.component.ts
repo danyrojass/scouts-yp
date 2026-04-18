@@ -1,140 +1,110 @@
-import {Component, OnInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
+import {Component, computed, inject, signal} from '@angular/core';
+import {toSignal} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
-import {UserService} from '../../services/user.service';
+import {map, of, switchMap} from 'rxjs';
 import {GroupService} from '../../../groups/services/group.service';
 import {SetService} from '../../../sets/services/set.service';
-import {User, UserLevel, UserType} from '../../models';
-import {Group} from '../../../groups/models';
-import {Set} from '../../../sets/models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {User, UserLevel, UserType} from '../../models';
+import {UserService} from '../../services/user.service';
 
 @Component({
-  selector: 'app-user-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, AlertComponent, LoadingSpinnerComponent],
-  templateUrl: './user-form.component.html',
-  styleUrls: ['./user-form.component.css']
+    selector: 'app-user-form',
+    standalone: true,
+    imports: [CommonModule, ReactiveFormsModule, AlertComponent, LoadingSpinnerComponent],
+    templateUrl: './user-form.component.html',
+    styleUrls: ['./user-form.component.css']
 })
-export class UserFormComponent implements OnInit {
-  userForm!: FormGroup;
-  isLoading: boolean = false;
-  isEditing: boolean = false;
-  userId: string | null = null;
-  errorMessage: string = '';
-  groups: Group[] = [];
-  sets: Set[] = [];
+export class UserFormComponent {
 
-  userTypes: string[] = Object.values(UserType);
-  userLevels: string[] = Object.values(UserLevel);
-
-  constructor(
-    private fb: FormBuilder,
-    private userService: UserService,
-    private groupService: GroupService,
-    private setService: SetService,
-    private router: NavigationService,
-    private route: ActivatedRoute
-  ) {
-  }
-
-  ngOnInit(): void {
-    this.initForm();
-    this.loadGroups();
-
-    this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.isEditing = true;
-        this.userId = params['id'];
-        this.loadUser(this.userId);
-      }
+    isLoading = signal(false);
+    errorMessage = signal('');
+    isEditing = signal(false);
+    userId = signal<string | null>(null);
+    userTypes = Object.values(UserType);
+    userLevels = Object.values(UserLevel);
+    groupId = computed(() => this.userForm.get('groupId')?.value ?? '');
+    private fb = inject(FormBuilder);
+    userForm: FormGroup = this.fb.group({
+        name: ['', [Validators.required]],
+        email: ['', [Validators.required, Validators.email]],
+        dateOfBirth: ['', [Validators.required]],
+        type: [UserType.BENEFICIARIO, [Validators.required]],
+        level: [UserLevel.LOBATO, [Validators.required]],
+        groupId: [null],
+        setId: [null]
     });
+    private userService = inject(UserService);
+    private groupService = inject(GroupService);
+    groups = toSignal(this.groupService.getGroups(), {initialValue: []});
+    private setService = inject(SetService);
+    sets = toSignal(
+        this.groupId().trim()
+            ? this.setService.getSetsByGroup(this.groupId())
+            : of([]),
+        {initialValue: []}
+    );
+    private router = inject(NavigationService);
+    private route = inject(ActivatedRoute);
+    user = toSignal(
+        this.route.paramMap.pipe(
+            map(params => params.get('id')),
+            switchMap(id => {
+                if (!id) return of(null);
+                this.isEditing.set(true);
+                this.userId.set(id);
+                this.isLoading.set(true);
+                return this.userService.getUserById(id);
+            })
+        ),
+        {initialValue: null}
+    );
 
-    const groupIdControl = this.userForm.get('groupId');
-    if (groupIdControl) {
-      groupIdControl.valueChanges.subscribe((groupId: string | null) => {
-        if (groupId) {
-          this.loadSets(groupId);
-        } else {
-          this.sets = [];
-          this.userForm.patchValue({setId: null});
+    constructor() {
+        const currentUser = this.user();
+        if (currentUser) {
+            this.userForm.patchValue(currentUser);
+            if (currentUser.groupId) {
+                this.userForm.patchValue({groupId: currentUser.groupId});
+            }
+            this.isLoading.set(false);
         }
-      });
-    }
-  }
-
-  initForm(): void {
-    this.userForm = this.fb.group({
-      name: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      dateOfBirth: ['', [Validators.required]],
-      type: [UserType.BENEFICIARIO, [Validators.required]],
-      level: [UserLevel.LOBATO, [Validators.required]],
-      groupId: [null],
-      setId: [null]
-    });
-  }
-
-  loadGroups(): void {
-    this.groupService.getGroups().subscribe(groups => {
-      this.groups = groups;
-    });
-  }
-
-  loadSets(groupId: string): void {
-    this.setService.getSetsByGroup(groupId).subscribe(sets => {
-      this.sets = sets;
-    });
-  }
-
-  loadUser(id: string | null): void {
-    this.isLoading = true;
-    this.userService.getUserById(id).subscribe({
-      next: (user): void => {
-        this.userForm.patchValue(user);
-        if (user.groupId) {
-          this.loadSets(user.groupId);
-        }
-        this.isLoading = false;
-      },
-      error: (error): void => {
-        console.error('Error al cargar el usuario:', error);
-        this.errorMessage = 'Ocurrió un error al cargar el usuario';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  onSubmit(): void {
-    if (this.userForm.invalid) {
-      return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    async onSubmit(): Promise<void> {
+        if (this.userForm.invalid) return;
 
-    const userData: Partial<User> = {
-      ...this.userForm.value,
-      dateOfBirth: new Date(this.userForm.value.dateOfBirth)
-    };
+        this.isLoading.set(true);
+        this.errorMessage.set('');
 
-    if (this.isEditing && this.userId) {
-      this.userService.updateUser(this.userId, userData).subscribe({
-        next: () => {
-          this.router.navigate(['/users']);
-        },
-        error: (error) => {
-          console.error('Error al editar el usuario:', error);
-          this.errorMessage = 'Ocurrió un error al editar el usuario';
-          this.isLoading = false;
+        const userData: Partial<User> = {
+            ...this.userForm.getRawValue(),
+            dateOfBirth: new Date(this.userForm.value.dateOfBirth)
+        };
+
+        try {
+            if (this.isEditing() && this.userId()) {
+                await this.userService.updateUser(this.userId()!, userData);
+            } else {
+                await this.userService.createUser(userData);
+            }
+            this.router.navigate(['/users']);
+        } catch (error) {
+            console.error(error);
+            this.errorMessage.set(
+                this.isEditing()
+                    ? 'Ocurrió un error al editar el usuario'
+                    : 'Ocurrió un error al crear el usuario'
+            );
+        } finally {
+            this.isLoading.set(false);
         }
-      });
     }
-  }
 
-  onCancel(): void {
-    this.router.navigate(['/users']);
-  }
+    onCancel(): void {
+        this.router.navigate(['/users']);
+    }
 }

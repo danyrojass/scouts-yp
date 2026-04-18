@@ -25,7 +25,9 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles/styles.css",
+              "src/app/shared/styles/detail-card.css",
+              "src/app/shared/styles/form-card.css"
             ]
           },
           "configurations": {
@@ -85,11 +87,16 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles/styles.css",
+              "src/app/shared/styles/detail-card.css",
+              "src/app/shared/styles/form-card.css"
             ]
           }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "406e164f-ca55-4411-87fc-6a0e20b84ad4"
   }
 }

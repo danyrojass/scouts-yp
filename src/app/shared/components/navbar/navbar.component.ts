@@ -1,34 +1,32 @@
-import {Component, OnInit, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
-import {AuthService} from '../../../auth/services/auth.service';
+import {AuthService} from "../../../auth/services/auth.service";
+
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.css']
+    selector: 'app-navbar',
+    standalone: true,
+    imports: [
+        CommonModule,
+        RouterModule
+    ],
+    templateUrl: './navbar.component.html',
+    styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent implements OnInit {
-  isLoggedIn = signal(false);
-  isMenuOpen = signal(false);
+export class NavbarComponent {
 
-  constructor(private authService: AuthService) {
-  }
+    isMenuOpen = signal(false);
+    isLoggedIn = computed(() => !!this.user());
+    private authService = inject(AuthService);
+    user = this.authService.user;
 
-  ngOnInit(): void {
-    this.authService.user$.subscribe(user => {
-      this.isLoggedIn.set(!!user);
-    });
-  }
+    toggleMenu(): void {
+        this.isMenuOpen.update(v => !v);
+    }
 
-  toggleMenu(): void {
-    this.isMenuOpen.set(!this.isMenuOpen);
-  }
-
-  onLogout(): void {
-    this.authService.logout();
-    this.isMenuOpen.set(false);
-  }
+    onLogout(): void {
+        this.authService.logout();
+        this.isMenuOpen.set(false);
+    }
 }
