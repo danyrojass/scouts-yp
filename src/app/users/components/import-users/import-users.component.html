@@ -1,0 +1,92 @@
+<div class="import-wrapper">
+    <h2>Importar Usuarios</h2>
+
+    <div class="import-info">
+        <h3>Formato esperado</h3>
+        <p>El archivo debe contener las siguientes columnas:</p>
+        <ul>
+            <li><strong>name</strong> - Nombre completo (obligatorio)</li>
+            <li><strong>email</strong> - Correo electrónico (obligatorio)</li>
+            <li><strong>dateOfBirth</strong> - Fecha de nacimiento (opcional)</li>
+            <li><strong>type</strong> - Tipo: Beneficiario, Jefe (opcional)</li>
+            <li><strong>level</strong> - Nivel: Lobato, Colorado, Manada, Tropa, Clan, Roquer, Coordinamiento (opcional)</li>
+            <li><strong>groupId</strong> - ID del grupo (opcional)</li>
+            <li><strong>setId</strong> - ID del sets (opcional)</li>
+        </ul>
+    </div>
+
+    @if (errorMessage) {
+        <div class="alert alert-error">{{ errorMessage }}</div>
+    }
+
+    @if (successMessage) {
+        <div class="alert alert-success">{{ successMessage }}</div>
+    }
+
+    @if (importResult) {
+        <div class="result-box">
+            <p>Importados: {{ importResult.success }}</p>
+            @if (importResult.failed && importResult.failed > 0) {
+                <p class="failed">Fallidos: {{ importResult.failed }}</p>
+            }
+        </div>
+    }
+
+    <div class="file-input">
+        <label class="form-label">Seleccionar archivo</label>
+        <input
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            (change)="onFileSelected($event)"
+        />
+    </div>
+
+    @if (isLoading()) {
+        <div class="loading">
+            <span class="spinner"></span>
+            Procesando...
+        </div>
+    }
+
+    @if (previewData.length > 0) {
+        <div class="preview">
+            <h3>Vista previa ({{ previewData.length }} usuarios)</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Fecha Nac.</th>
+                            <th>Tipo</th>
+                            <th>Nivel</th>
+                            <th>Grupo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (user of previewData.slice(0, 10); track user.email) {
+                            <tr>
+                                <td>{{ user.name }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.dateOfBirth }}</td>
+                                <td>{{ user.type }}</td>
+                                <td>{{ user.level }}</td>
+                                <td>{{ user.groupId }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (previewData.length > 10) {
+                <p class="more-info">... y {{ previewData.length - 10 }} más</p>
+            }
+
+            <div class="actions">
+                <button class="btn-secondary" (click)="clearFile()">Cancelar</button>
+                <button class="btn-primary" (click)="importUsers()">
+                    Importar {{ previewData.length }} usuarios
+                </button>
+            </div>
+        </div>
+    }
+</div>
