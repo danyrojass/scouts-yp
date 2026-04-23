@@ -5,6 +5,7 @@ import {RouterModule} from '@angular/router';
 import {AuthService} from '../../services/auth.service';
 import {AlertComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {environment} from '../../../../environments/environment';
 
 @Component({
     selector: 'app-login',
@@ -21,6 +22,7 @@ export class LoginComponent {
 
     isLoading = signal(false);
     errorMessage = signal('');
+    showRegister = environment.config.showRegister;
 
     loginForm = this.fb.nonNullable.group({
         email: ['', [Validators.required, Validators.email]],

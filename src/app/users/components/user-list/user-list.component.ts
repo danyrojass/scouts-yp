@@ -7,6 +7,7 @@ import {LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
+import {environment} from '../../../../environments/environment';
 
 @Component({
     selector: 'app-user-list',
@@ -23,6 +24,7 @@ export class UserListComponent {
     isLoading = signal(true);
     errorMessage = signal('');
     protected readonly UserType = UserType;
+    allowUserImport = environment.config.allowUserImport;
     private userService = inject(UserService);
     users = toSignal(this.userService.getUsers().pipe(
         tap(() => this.isLoading.set(false)),
@@ -41,6 +43,10 @@ export class UserListComponent {
 
     onNewUser(): void {
         this.router.navigate(['/users/new']);
+    }
+
+    onImportUsers(): void {
+        this.router.navigate(['/users/import']);
     }
 
     onViewUser(id: string): void {

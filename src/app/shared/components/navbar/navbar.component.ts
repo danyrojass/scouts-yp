@@ -2,6 +2,8 @@ import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {RouterModule} from '@angular/router';
 import {AuthService} from "../../../auth/services/auth.service";
+import {environment} from "../../../../environments/environment";
+import {UserType} from "../../../users/models";
 
 
 @Component({
@@ -20,6 +22,9 @@ export class NavbarComponent {
     isLoggedIn = computed(() => !!this.user());
     private authService = inject(AuthService);
     user = this.authService.user;
+    showRegister = environment.config.showRegister;
+    allowUserImport = environment.config.allowUserImport;
+    isAdmin = computed(() => this.user()?.type === UserType.JEFE);
 
     toggleMenu(): void {
         this.isMenuOpen.update(v => !v);
