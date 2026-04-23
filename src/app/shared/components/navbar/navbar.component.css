@@ -137,6 +137,11 @@
     border-left: 1px solid var(--neutral-200);
 }
 
+.navbar-auth.no-border {
+    border-left: none;
+    padding-left: 0;
+}
+
 .user-menu {
     display: flex;
     align-items: center;

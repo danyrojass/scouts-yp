@@ -1,16 +1,16 @@
 export const environment = {
     production: false,
     firebase: {
-        apiKey: process.env['NG_APP_FIREBASE_API_KEY'] || "",
-        authDomain: process.env['NG_APP_FIREBASE_AUTH_DOMAIN'] || "",
-        projectId: process.env['NG_APP_FIREBASE_PROJECT_ID'] || "",
-        storageBucket: process.env['NG_APP_FIREBASE_STORAGE_BUCKET'] || "",
-        messagingSenderId: process.env['NG_APP_FIREBASE_MESSAGING_SENDER_ID'] || "",
-        appId: process.env['NG_APP_FIREBASE_APP_ID'] || "",
-        measurementId: process.env['NG_APP_FIREBASE_MEASUREMENT_ID'] || ""
+        apiKey: 'AIzaSyCTVok0KrV_S8l5E-LNvsHrlpHgkyNhrZs',
+        authDomain: 'scout-app-7b912.firebaseapp.com',
+        projectId: 'scout-app-7b912',
+        storageBucket: 'scout-app-7b912.firebasestorage.app',
+        messagingSenderId: '823584633196',
+        appId: '1:823584633196:web:eba2da82f22701905e0349',
+        measurementId: 'G-47XS2TVW2H'
     },
     config: {
-        showRegister: process.env['NG_APP_SHOW_REGISTER'] === 'true',
-        allowUserImport: process.env['NG_APP_ALLOW_USER_IMPORT'] !== 'false'
+        showRegister: false,
+        allowUserImport: true
     }
 };
