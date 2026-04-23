@@ -3,8 +3,8 @@ import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import * as XLSX from 'xlsx';
 import {UserService} from '../../services/user.service';
-import {UserType, UserLevel} from '../../models';
-import {AlertComponent} from '../../../shared/components';
+import {UserLevel, UserType} from '../../models';
+import {LoadingSpinnerComponent} from '../../../shared/components';
 
 interface ParsedUser {
     name: string;
@@ -19,7 +19,7 @@ interface ParsedUser {
 @Component({
     selector: 'app-import-users',
     standalone: true,
-    imports: [CommonModule, FormsModule, AlertComponent],
+    imports: [CommonModule, FormsModule, LoadingSpinnerComponent],
     templateUrl: './import-users.component.html',
     styleUrls: ['./import-users.component.css']
 })

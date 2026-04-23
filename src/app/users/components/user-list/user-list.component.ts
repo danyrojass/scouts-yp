@@ -8,11 +8,12 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
 import {environment} from '../../../../environments/environment';
+import {RouterLink} from "@angular/router";
 
 @Component({
     selector: 'app-user-list',
     standalone: true,
-    imports: [CommonModule, LoadingSpinnerComponent],
+    imports: [CommonModule, LoadingSpinnerComponent, RouterLink],
     templateUrl: './user-list.component.html',
     styleUrls: [
         './user-list.component.css',
