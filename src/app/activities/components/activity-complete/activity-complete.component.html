@@ -1,0 +1,96 @@
+<div class="container">
+    <div class="page-header">
+        <h1>Completar Actividad</h1>
+    </div>
+
+    <div class="form-container">
+        @if (errorMessage()) {
+            <app-alert
+                    (dismiss)="errorMessage.set('')"
+                    [message]="errorMessage"
+                    [type]="'error'">
+            </app-alert>
+        }
+
+        @if (successMessage()) {
+            <app-alert
+                    (dismiss)="successMessage.set('')"
+                    [message]="successMessage"
+                    [type]="'success'">
+            </app-alert>
+        }
+
+        <form (ngSubmit)="onSubmit()" [formGroup]="completionForm">
+            <div class="form-group">
+                <label class="form-label" for="activityId">Actividad</label>
+                <select
+                        [ngClass]="{'invalid': completionForm.get('activityId')?.invalid && completionForm.get('activityId')?.touched}"
+                        class="form-control"
+                        formControlName="activityId"
+                        id="activityId"
+                >
+                    <option value="">Selecciona una actividad</option>
+                    @for (activity of activities(); track activity.id) {
+                        <option [value]="activity.id">
+                            {{ activity.name }} ({{ activity.points }} pts)
+                        </option>
+                    }
+                </select>
+                @if (completionForm.get('activityId')?.invalid && completionForm.get('activityId')?.touched) {
+                    <div class="form-error">
+                        <span>Selecciona una actividad</span>
+                    </div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="setId">Sección</label>
+                <select
+                        [ngClass]="{'invalid': completionForm.get('setId')?.invalid && completionForm.get('setId')?.touched}"
+                        class="form-control"
+                        formControlName="setId"
+                        id="setId"
+                >
+                    <option value="">Selecciona una sección</option>
+                    @for (set of userSets(); track set.id) {
+                        <option [value]="set.id">
+                            {{ set.name }} ({{ set.type }})
+                        </option>
+                    }
+                </select>
+                @if (completionForm.get('setId')?.invalid && completionForm.get('setId')?.touched) {
+                    <div class="form-error">
+                        <span>Selecciona una sección</span>
+                    </div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="completedAt">Fecha de completación</label>
+                <input
+                        [ngClass]="{'invalid': completionForm.get('completedAt')?.invalid && completionForm.get('completedAt')?.touched}"
+                        class="form-control"
+                        formControlName="completedAt"
+                        id="completedAt"
+                        type="date"
+                >
+                @if (completionForm.get('completedAt')?.invalid && completionForm.get('completedAt')?.touched) {
+                    <div class="form-error">
+                        <span>La fecha es requerida</span>
+                    </div>
+                }
+            </div>
+
+            <div class="form-actions">
+                <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
+                <button (click)="onSubmit()" class="btn btn-primary" type="button" [disabled]="completionForm.invalid || isLoading()">
+                    @if (isLoading()) {
+                        <app-loading-spinner size="sm"></app-loading-spinner>
+                    } @else {
+                        <span>Completar</span>
+                    }
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

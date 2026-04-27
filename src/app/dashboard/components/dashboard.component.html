@@ -110,7 +110,10 @@
                     <div class="card card-activities">
                         <div class="card-header">
                             <h2>Actividad Reciente</h2>
-                            <a routerLink="/activities" class="btn btn-sm btn-secondary">Ver todas</a>
+                            <div class="card-header-actions">
+                                <a routerLink="/activities/complete" class="btn btn-sm btn-primary">Completar</a>
+                                <a routerLink="/activities" class="btn btn-sm btn-secondary">Ver todas</a>
+                            </div>
                         </div>
                         <div class="card-body">
                             @if (completedActivities().length === 0) {
@@ -130,7 +133,7 @@
                                     <tbody>
                                         @for (completion of completedActivities().slice(0, 5); track completion.activityId) {
                                             <tr>
-                                                <td>{{ completion.activityId }}</td>
+                                                <td>{{ getActivityName(completion.activityId) }}</td>
                                                 <td>{{ completion.completedAt | date:'dd/MM/yyyy' }}</td>
                                                 <td><span class="badge badge-success">+{{ completion.earnedPoints }}</span></td>
                                             </tr>
@@ -187,18 +190,21 @@
                                     <p>Aún no hay secciones</p>
                                 </div>
                             } @else {
-                                @for (set of groupSets().slice(0, 5); track set.id) {
-                                    <div class="list-item">
-                                        <div class="list-item-info">
-                                            <div class="list-item-avatar primary">
-                                                {{ set.name.charAt(0) }}
+                                @for (group of groupedSets(); track group.type) {
+                                    <div class="section-group">
+                                        <h3 class="section-title">{{ group.type }}</h3>
+                                        @for (set of group.sets; track set.id) {
+                                            <div class="list-item">
+                                                <div class="list-item-info">
+                                                    <div class="list-item-avatar primary">
+                                                        {{ set.name.charAt(0) }}
+                                                    </div>
+                                                    <div class="list-item-details">
+                                                        <h4>{{ set.name }}</h4>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="list-item-details">
-                                                <h4>{{ set.name }}</h4>
-                                                <p>{{ set.type }}</p>
-                                            </div>
-                                        </div>
-                                        <span class="badge badge-secondary">{{ set.type }}</span>
+                                        }
                                     </div>
                                 }
                             }

@@ -7,4 +7,5 @@ export interface Activity {
     level: UserLevel;
     points: number;
     createdAt: Date;
+    scheduledAt?: Date;
 }

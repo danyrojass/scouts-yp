@@ -10,7 +10,7 @@ import {ActivityService} from '../../activities/services/activity.service';
 
 import {User, UserType} from '../../users/models';
 import {Group} from '../../groups/models';
-import {Set} from '../../sets/models';
+import {Set, SetType} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
@@ -23,6 +23,11 @@ interface DashboardData {
     activities: Activity[];
     completions: ActivityCompletion[];
     userSet?: Set;
+}
+
+interface GroupedSets {
+    type: SetType;
+    sets: Set[];
 }
 
 @Component({
@@ -46,12 +51,32 @@ export class DashboardComponent implements OnInit {
     activities = signal<Activity[]>([]);
     completedActivities = signal<ActivityCompletion[]>([]);
 
+    groupedSets = computed(() => {
+        const sets = this.groupSets();
+        const grouped: GroupedSets[] = [];
+        
+        for (const setType of Object.values(SetType)) {
+            const setsOfType = sets.filter(s => s.type === setType);
+            if (setsOfType.length > 0) {
+                grouped.push({ type: setType, sets: setsOfType });
+            }
+        }
+        
+        return grouped;
+    });
+
+    getActivityName(activityId: string | null | undefined): string {
+        if (!activityId) return 'Unknown';
+        const activity = this.activities().find(a => a.id === activityId);
+        return activity?.name ?? 'Unknown';
+    }
+
     totalPoints = computed(() => {
         const user = this.currentUser();
         if (!user?.groupId) return 0;
 
         return this.completedActivities()
-            .filter(c => c.groupId === user.groupId)
+            .filter(c => c.setId === user.setId)
             .reduce((sum, c) => sum + c.earnedPoints, 0);
     });
 
@@ -85,7 +110,7 @@ export class DashboardComponent implements OnInit {
                 firstValueFrom(this.userService.getUsersByGroup(user.groupId!)),
                 firstValueFrom(this.setService.getSets()),
                 firstValueFrom(this.activityService.getActivities()),
-                firstValueFrom(this.activityService.getActivityCompletions(user.groupId!))
+                firstValueFrom(this.activityService.getActivityCompletions(user.setId!))
             ]);
 
             const isJefe = user.type === UserType.JEFE;

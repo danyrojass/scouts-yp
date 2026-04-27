@@ -32,11 +32,13 @@ export class ActivityFormComponent {
         key: FormControl<string>;
         level: FormControl<UserLevel>;
         points: FormControl<number>;
+        scheduledAt: FormControl<string>;
     }> = this.fb.group({
         name: this.fb.control('', {nonNullable: true, validators: [Validators.required]}),
         key: this.fb.control('', {nonNullable: true, validators: [Validators.required]}),
         level: this.fb.control(UserLevel.LOBATO, {nonNullable: true, validators: [Validators.required]}),
-        points: this.fb.control(0, {nonNullable: true, validators: [Validators.required, Validators.min(0)]})
+        points: this.fb.control(0, {nonNullable: true, validators: [Validators.required, Validators.min(0)]}),
+        scheduledAt: this.fb.control('', {nonNullable: true})
     });
     private activityService = inject(ActivityService);
     private router = inject(NavigationService);
@@ -52,7 +54,11 @@ export class ActivityFormComponent {
                 return this.activityService.getActivityById(id).pipe(
                     map(activity => {
                         if (activity) {
-                            this.activityForm.patchValue(activity);
+                            const formValue: any = {...activity};
+                            if (activity.scheduledAt) {
+                                formValue.scheduledAt = activity.scheduledAt.toISOString().slice(0, 16);
+                            }
+                            this.activityForm.patchValue(formValue);
                         }
                         this.isLoading.set(false);
                         return activity;
@@ -70,14 +76,21 @@ export class ActivityFormComponent {
     );
 
     async onSubmit() {
-        if (this.activityForm.invalid) return;
+        if (this.activityForm.invalid) {
+            this.activityForm.markAllAsTouched();
+            return;
+        }
 
         this.isLoading.set(true);
         this.errorMessage.set('');
 
         const activityData: Activity = {
-            ...this.activityForm.getRawValue(),
-            createdAt: new Date()
+            name: this.activityForm.value.name,
+            key: this.activityForm.value.key,
+            level: this.activityForm.value.level,
+            points: this.activityForm.value.points,
+            createdAt: new Date(),
+            scheduledAt: this.activityForm.value.scheduledAt ? new Date(this.activityForm.value.scheduledAt) : undefined
         };
 
         try {
