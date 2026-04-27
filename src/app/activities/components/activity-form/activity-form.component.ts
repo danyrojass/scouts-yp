@@ -85,10 +85,10 @@ export class ActivityFormComponent {
         this.errorMessage.set('');
 
         const activityData: Activity = {
-            name: this.activityForm.value.name,
-            key: this.activityForm.value.key,
-            level: this.activityForm.value.level,
-            points: this.activityForm.value.points,
+            name: this.activityForm.value.name ?? '',
+            key: this.activityForm.value.key ?? '',
+            level: this.activityForm.value.level ?? UserLevel.LOBATO,
+            points: this.activityForm.value.points ?? 0,
             createdAt: new Date(),
             scheduledAt: this.activityForm.value.scheduledAt ? new Date(this.activityForm.value.scheduledAt) : undefined
         };
