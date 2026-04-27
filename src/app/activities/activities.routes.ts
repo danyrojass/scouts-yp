@@ -17,6 +17,11 @@ export const ACTIVITY_ROUTES: Routes = [
             .then(m => m.ActivityFormComponent)
     },
     {
+        path: 'complete',
+        loadComponent: () => import('./components/activity-complete/activity-complete.component')
+            .then(m => m.ActivityCompleteComponent)
+    },
+    {
         path: ':id',
         loadComponent: () => import('./components/activity-detail/activity-detail.component')
             .then(m => m.ActivityDetailComponent)

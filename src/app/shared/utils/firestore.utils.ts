@@ -64,6 +64,7 @@ export function firestoreToActivity(data: any): any {
     return {
         ...data,
         createdAt: toDate(data.created_at ?? data.createdAt),
+        scheduledAt: toDate(data.scheduled_at ?? data.scheduledAt),
     };
 }
 
@@ -71,6 +72,7 @@ export function activityToFirestore(activity: any): any {
     return {
         ...activity,
         created_at: activity.createdAt instanceof Date ? activity.createdAt : (activity.createdAt ? new Date(activity.createdAt) : new Date()),
+        scheduled_at: activity.scheduledAt instanceof Date ? activity.scheduledAt : (activity.scheduledAt ? new Date(activity.scheduledAt) : null),
     };
 }
 
@@ -81,6 +83,8 @@ export function firestoreToActivityCompletion(data: any): any {
         activityId: data.activity_id ?? data.activityId ?? null,
         groupId: data.group_id ?? data.groupId ?? null,
         userId: data.user_id ?? data.userId ?? null,
+        setId: data.set_id ?? data.setId ?? null,
+        earnedPoints: data.earned_points ?? data.earnedPoints ?? 0,
         completedAt: toDate(data.completed_at ?? data.completedAt),
     };
 }

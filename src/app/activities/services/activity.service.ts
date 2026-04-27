@@ -12,7 +12,7 @@ import {
     updateDoc,
     where
 } from '@angular/fire/firestore';
-import {Observable} from 'rxjs';
+import {firstValueFrom, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {Activity, ActivityCompletion} from '../models';
 import {activityToFirestore, firestoreToActivity, firestoreToActivityCompletion} from '../../shared/utils/firestore.utils';
@@ -54,16 +54,40 @@ export class ActivityService {
         return updateDoc(activityRef, activityToFirestore(activity));
     }
 
-    deleteActivity(id: string) {
-        const activityRef = doc(this.firestore, `activities/${id}`);
-        return deleteDoc(activityRef);
-    }
-
-    getActivityCompletions(groupId: string): Observable<ActivityCompletion[]> {
-        const completionsRef = collection(this.firestore, 'activityCompletions');
-        const q = query(completionsRef, where('group_id', '==', groupId), orderBy('completed_at', 'desc'));
+    getActivityCompletions(setId: string): Observable<ActivityCompletion[]> {
+        const completionsRef = collection(this.firestore, 'activity-completion');
+        const q = query(completionsRef, where('set_id', '==', setId), orderBy('completed_at', 'desc'));
         return collectionData(q, {idField: 'id'}).pipe(
             map((data: any[]) => data.map(item => ({...firestoreToActivityCompletion(item), id: item.id})))
         ) as Observable<ActivityCompletion[]>;
+    }
+
+    private async getActivityCompletionsByActivityId(activityId: string): Promise<ActivityCompletion[]> {
+        const completionsRef = collection(this.firestore, 'activity-completion');
+        const q = query(completionsRef, where('activity_id', '==', activityId));
+        const data = await firstValueFrom(collectionData(q, {idField: 'id'}));
+        return data.map((item: any) => ({...firestoreToActivityCompletion(item), id: item.id})) as ActivityCompletion[];
+    }
+
+    async deleteActivity(id: string) {
+        const activityRef = doc(this.firestore, `activities/${id}`);
+        
+        const completions = await this.getActivityCompletionsByActivityId(id);
+        const deletePromises = completions.map(completion => 
+            deleteDoc(doc(this.firestore, `activity-completion/${completion.id}`))
+        );
+        
+        await Promise.all([deleteDoc(activityRef), ...deletePromises]);
+    }
+
+    createCompletion(completion: ActivityCompletion) {
+        const completionsRef = collection(this.firestore, 'activity-completion');
+        return addDoc(completionsRef, {
+            activity_id: completion.activityId,
+            set_id: completion.setId,
+            user_id: completion.userId,
+            completed_at: completion.completedAt instanceof Date ? completion.completedAt : new Date(completion.completedAt),
+            earned_points: completion.earnedPoints
+        });
     }
 }

@@ -53,16 +53,15 @@ export class ActivityListComponent {
         this.router.navigate(['/activities/edit', id]);
     }
 
-    onDeleteActivity(id: string): void {
+    async onDeleteActivity(id: string): Promise<void> {
         if (!confirm('¿Estás seguro de borrar esta actividad?')) return;
 
-        this.activityService.deleteActivity(id)
-            .then(() => {
-                console.log('Actividad borrada correctamente');
-            })
-            .catch(err => {
-                console.error('Error al borrar la actividad:', err);
-                this.errorMessage.set('Ocurrió un error al borrar la actividad');
-            });
+        try {
+            await this.activityService.deleteActivity(id);
+            console.log('Actividad borrada correctamente');
+        } catch (err) {
+            console.error('Error al borrar la actividad:', err);
+            this.errorMessage.set('Ocurrió un error al borrar la actividad');
+        }
     }
 }
