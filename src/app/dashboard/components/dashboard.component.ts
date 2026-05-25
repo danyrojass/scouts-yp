@@ -113,12 +113,12 @@ export class DashboardComponent implements OnInit {
                 firstValueFrom(this.activityService.getActivityCompletions(user.setId!))
             ]);
 
-            const isJefe = user.type === UserType.JEFE;
+            const isDirigente = user.type === UserType.DIRIGENTE;
             let filteredSets = allSets;
             let filteredActivities = allActivities;
 
             filteredSets = filteredSets.filter(s => s.groupId === user.groupId);
-            if (!isJefe) {
+            if (!isDirigente) {
                 if (user.setId) {
                     const userSet = filteredSets.find(s => s.id === user.setId);
                     if (userSet) {

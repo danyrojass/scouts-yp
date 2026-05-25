@@ -26,8 +26,9 @@ Scouts YP is a **Youth Program Management application** built for the Scout orga
 - **Auto-sync:** User data automatically synchronizes from Firestore when auth state changes
 
 **Data Models:**
-- **User:** Has properties like name, email, type (BENEFICIARIO), level (LOBATO), groupId, setId, dateOfBirth
-- **User Types & Levels:** Differentiate scout categories
+- **User:** Has properties like name, email, type (BENEFICIARIO | DIRIGENTE), level (LOBATO), groupId, setId, dateOfBirth
+- **User Types (roles):** `BENEFICIARIO` (scout member), `DIRIGENTE` (leader, full CRUD permissions)
+- **User Levels:** Scout age categories — `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE`
 
 ### **Project Structure**
 ```

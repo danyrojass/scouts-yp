@@ -9,18 +9,18 @@ Aplicacion web para la gestion de beneficiarios, grupos y actividades scout.
 - **Gestion de Secciones**: CRUD de secciones por grupo
 - **Gestion de Actividades**: CRUD de actividades con puntos
 - **Gestion de Usuarios**: CRUD con permisos diferenciados por rol
-- **Dashboard Personalizado**: Segun tipo de usuario (Jefe/Dirigente/Beneficiario)
+- **Dashboard Personalizado**: Segun tipo de usuario (Dirigente/Beneficiario)
 - **Sistema de Puntos**: Seguimiento de actividades completadas
 
 ## Permisos por Rol
 
-| Funcion | Jefe | Dirigente | Beneficiario |
-|---------|------|----------|-------------|
-| Ver dashboard | ✅ | ✅ | ✅ |
-| Ver todas las secciones | ✅ | Solo su nivel | Solo su grupo |
-| Ver todas las actividades | ✅ | Solo su nivel | Solo su nivel |
-| Crear/Editar/Eliminar | ✅ | ❌ | ❌ |
-| Completar actividades | ✅ | ✅ | Solo grupo propio |
+| Funcion | Dirigente | Beneficiario |
+|---------|-----------|-------------|
+| Ver dashboard | ✅ | ✅ |
+| Ver todas las secciones | ✅ | Solo su grupo |
+| Ver todas las actividades | ✅ | Solo su nivel |
+| Crear/Editar/Eliminar | ✅ | ❌ |
+| Completar actividades | ✅ | Solo grupo propio |
 
 ## Tech Stack
 
@@ -108,7 +108,7 @@ users/
   - id: string
   - name: string
   - email: string
-  - type: "Jefe" | "Beneficiario"
+  - type: "Dirigente" | "Beneficiario"
   - level: "Lobato" | "Scout" | "Caminante" | "Rover" | "Jefe"
   - groupId: string
   - setId: string | null

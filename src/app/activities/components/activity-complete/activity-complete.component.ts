@@ -56,7 +56,7 @@ export class ActivityCompleteComponent implements OnInit {
         this.authService.user$.pipe(
             switchMap(user => {
                 if (!user) return of([]);
-                if (user.type === UserType.JEFE) {
+                if (user.type === UserType.DIRIGENTE) {
                     return this.activityService.getActivities().pipe(
                         map(activities => activities)
                     );

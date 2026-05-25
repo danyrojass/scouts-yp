@@ -7,7 +7,7 @@ import {LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, map, of, tap} from "rxjs";
-import {Set} from "../../models";
+import {Set, SetType} from "../../models";
 
 @Component({
     selector: 'app-set-list',
@@ -30,12 +30,18 @@ export class SetListComponent {
     private setService = inject(SetService);
     private currentUserValue = this.authService.user;
 
+    private readonly typeOrder = Object.values(SetType);
+
     sets = toSignal(
         this.setService.getSets().pipe(
             map(sets => {
                 const user = this.currentUserValue();
-                if (user?.type === UserType.JEFE) return sets;
-                return sets.filter(s => s.groupId === user?.groupId);
+                let filtered = user?.type === UserType.DIRIGENTE
+                    ? sets
+                    : sets.filter(s => s.groupId === user?.groupId);
+                return filtered.sort((a, b) =>
+                    this.typeOrder.indexOf(a.type) - this.typeOrder.indexOf(b.type)
+                );
             }),
             tap(() => this.isLoading.set(false)),
             catchError(err => {

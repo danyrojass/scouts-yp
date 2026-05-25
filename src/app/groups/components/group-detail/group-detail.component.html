@@ -8,7 +8,7 @@
     @if (!isLoading() && group()) {
         <div class="page-header">
             <h1>{{ group()?.name }}</h1>
-            @if (currentUser()?.type === UserType.JEFE) {
+            @if (currentUser()?.type === UserType.DIRIGENTE) {
                 <div class="header-actions">
                     <button (click)="onEdit()" class="btn btn-secondary mr-2">Editar</button>
                     <button (click)="onDelete()" class="btn btn-error">Borrar</button>

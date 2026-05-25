@@ -8,7 +8,7 @@
     @if (!isLoading() && user()) {
         <div class="page-header">
             <h1>{{ user()?.name }}</h1>
-            @if (currentUser()?.type === UserType.JEFE) {
+            @if (currentUser()?.type === UserType.DIRIGENTE) {
                 <div class="header-actions">
                     <button (click)="onEdit()" class="btn btn-secondary mr-2">Editar</button>
                     <button (click)="onDelete()" class="btn btn-error">Borrar</button>
@@ -18,7 +18,7 @@
 
         <div class="detail-card">
             <div class="detail-header">
-        <span [class.badge-accent]="user()?.type === UserType.JEFE"
+        <span [class.badge-accent]="user()?.type === UserType.DIRIGENTE"
               [class.badge-primary]="user()?.type === UserType.BENEFICIARIO"
               class="badge">
           {{ user()?.type }}

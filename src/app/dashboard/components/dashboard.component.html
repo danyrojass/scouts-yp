@@ -9,8 +9,8 @@
                 <div class="welcome-card">
                     <h1>Bienvenido, {{ currentUser()?.name }}</h1>
                     <div class="welcome-meta">
-                        <span class="badge" [class.badge-accent]="currentUser()?.type === UserType.JEFE" 
-                              [style.background]="currentUser()?.type === UserType.JEFE ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)'">
+                        <span class="badge" [class.badge-accent]="currentUser()?.type === UserType.DIRIGENTE" 
+                              [style.background]="currentUser()?.type === UserType.DIRIGENTE ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)'">
                             {{ currentUser()?.type }}
                         </span>
                         <span class="badge" [style.background]="'rgba(255,255,255,0.2)'">
@@ -22,7 +22,7 @@
 
             @if (!currentUser()?.groupId) {
                 <div class="alert alert-warning">
-                    Aún no estás asignado a ningún Grupo Scout. Contacta con un Jefe de Grupo para que te asigne.
+                    Aún no estás asignado a ningún Grupo Scout. Contacta con un Dirigente para que te asigne.
                 </div>
             } @else {
                 <div class="dashboard-grid">
@@ -94,7 +94,7 @@
                                 </div>
                                 @if (userSet()) {
                                     <div class="user-set">
-                                        @if (currentUser()?.type === UserType.JEFE) {
+                                        @if (currentUser()?.type === UserType.DIRIGENTE) {
                                             <div class="label">Secciones</div>
                                             <div class="value">{{ groupSets().length === 1 ? '1 sección' : groupSets().length + ' secciones' }}</div>
                                         } @else {
@@ -168,7 +168,7 @@
                                             </div>
                                         </div>
                                         <span class="badge"
-                                              [class.badge-accent]="user.type === UserType.JEFE"
+                                              [class.badge-accent]="user.type === UserType.DIRIGENTE"
                                               [class.badge-primary]="user.type === UserType.BENEFICIARIO">
                                             {{ user.type }}
                                         </span>
