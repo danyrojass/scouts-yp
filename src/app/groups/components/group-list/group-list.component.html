@@ -19,8 +19,12 @@
             </div>
         }
 
-        @if (!isLoading() && groups().length > 0) {
+        @if (!isLoading() && filteredGroups().length > 0) {
             <div class="data-card">
+                <div class="search-bar">
+                    <input type="text" class="form-control" placeholder="Buscar grupos..."
+                           (input)="searchTerm.set($any($event.target).value)" />
+                </div>
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
@@ -32,7 +36,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (group of groups(); track group.id) {
+                            @for (group of filteredGroups(); track group.id) {
                                 <tr>
                                     <td>
                                         <div class="group-cell">
@@ -72,7 +76,7 @@
             </div>
         }
 
-        @if (!isLoading() && groups().length === 0) {
+        @if (!isLoading() && filteredGroups().length === 0 && !searchTerm()) {
             <div class="data-card">
                 <div class="empty-state">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -81,6 +85,16 @@
                     @if (currentUser()?.type === UserType.DIRIGENTE) {
                         <button (click)="onCreateGroup()" class="btn btn-primary">Agregar grupo</button>
                     }
+                </div>
+            </div>
+        }
+
+        @if (!isLoading() && searchTerm() && filteredGroups().length === 0) {
+            <div class="data-card">
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <h3>Sin resultados</h3>
+                    <p>No se encontraron grupos con "{{ searchTerm() }}"</p>
                 </div>
             </div>
         }

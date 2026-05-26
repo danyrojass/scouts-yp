@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {GroupService} from '../../services/group.service';
@@ -23,6 +23,7 @@ export class GroupListComponent {
 
     isLoading = signal(true);
     errorMessage = signal('');
+    searchTerm = signal('');
     protected readonly UserType = UserType;
     private router = inject(NavigationService);
     private authService = inject(AuthService);
@@ -40,6 +41,15 @@ export class GroupListComponent {
         ),
         {initialValue: []}
     );
+    filteredGroups = computed(() => {
+        const term = this.searchTerm().toLowerCase().trim();
+        if (!term) return this.groups();
+        return this.groups().filter(g =>
+            g.name.toLowerCase().includes(term) ||
+            String(g.number).includes(term) ||
+            g.city.toLowerCase().includes(term)
+        );
+    });
 
     onCreateGroup(): void {
         this.router.navigate(['/groups/new']);

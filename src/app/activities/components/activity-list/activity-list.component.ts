@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {AuthService} from '../../../auth/services/auth.service';
 import {UserType} from '../../../users/models';
@@ -23,8 +23,19 @@ export class ActivityListComponent {
 
     isLoading = signal(true);
     errorMessage = signal('');
+    searchTerm = signal('');
     protected readonly UserType = UserType;
     private router = inject(NavigationService);
+    filteredActivities = computed(() => {
+        const term = this.searchTerm().toLowerCase().trim();
+        if (!term) return this.activities();
+        return this.activities().filter(a =>
+            a.name.toLowerCase().includes(term) ||
+            a.level.toLowerCase().includes(term) ||
+            (a.key && a.key.toLowerCase().includes(term))
+        );
+    });
+
     private authService = inject(AuthService);
     currentUser = this.authService.user;
     private activityService = inject(ActivityService);

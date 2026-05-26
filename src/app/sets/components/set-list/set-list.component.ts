@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {SetService} from '../../services/set.service';
 import {AuthService} from '../../../auth/services/auth.service';
@@ -23,6 +23,7 @@ export class SetListComponent {
 
     isLoading = signal(true);
     errorMessage = signal('');
+    searchTerm = signal('');
     protected readonly UserType = UserType;
     private router = inject(NavigationService);
     private authService = inject(AuthService);
@@ -31,6 +32,15 @@ export class SetListComponent {
     private currentUserValue = this.authService.user;
 
     private readonly typeOrder = Object.values(SetType);
+
+    filteredSets = computed(() => {
+        const term = this.searchTerm().toLowerCase().trim();
+        if (!term) return this.sets();
+        return this.sets().filter(s =>
+            s.name.toLowerCase().includes(term) ||
+            s.type.toLowerCase().includes(term)
+        );
+    });
 
     sets = toSignal(
         this.setService.getSets().pipe(

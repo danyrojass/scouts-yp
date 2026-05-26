@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {UserService} from '../../services/user.service';
 import {AuthService} from '../../../auth/services/auth.service';
@@ -24,6 +24,7 @@ export class UserListComponent {
 
     isLoading = signal(true);
     errorMessage = signal('');
+    searchTerm = signal('');
     protected readonly UserType = UserType;
     allowUserImport = environment.config.allowUserImport;
     private userService = inject(UserService);
@@ -38,6 +39,17 @@ export class UserListComponent {
     ), {
         initialValue: []
     });
+    filteredUsers = computed(() => {
+        const term = this.searchTerm().toLowerCase().trim();
+        if (!term) return this.users();
+        return this.users().filter(u =>
+            u.name.toLowerCase().includes(term) ||
+            u.email.toLowerCase().includes(term) ||
+            u.type.toLowerCase().includes(term) ||
+            u.level.toLowerCase().includes(term)
+        );
+    });
+
     private authService = inject(AuthService);
     currentUser = this.authService.user;
     private router = inject(NavigationService);
