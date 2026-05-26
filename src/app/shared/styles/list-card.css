@@ -50,6 +50,16 @@
     color: var(--neutral-600);
 }
 
+.search-bar {
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--neutral-200);
+}
+
+.search-bar .form-control {
+    width: 100%;
+    max-width: 400px;
+}
+
 .loading-container {
     display: flex;
     justify-content: center;
