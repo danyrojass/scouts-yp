@@ -5,3 +5,16 @@ node_modules
 .env
 .env.local
 .env.*.local
+
+# Server
+server/node_modules
+server/dist/
+server/.env
+
+# Docker
+backups/
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
