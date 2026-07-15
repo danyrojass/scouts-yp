@@ -62,7 +62,7 @@ export class ActivityService {
         ) as Observable<ActivityCompletion[]>;
     }
 
-    private async getActivityCompletionsByActivityId(activityId: string): Promise<ActivityCompletion[]> {
+    async getActivityCompletionsByActivityId(activityId: string): Promise<ActivityCompletion[]> {
         const completionsRef = collection(this.firestore, 'activity-completion');
         const q = query(completionsRef, where('activity_id', '==', activityId));
         const data = await firstValueFrom(collectionData(q, {idField: 'id'}));
@@ -89,5 +89,14 @@ export class ActivityService {
             completed_at: completion.completedAt instanceof Date ? completion.completedAt : new Date(completion.completedAt),
             earned_points: completion.earnedPoints
         });
+    }
+
+    getCompletionsBySetIds(setIds: string[]): Observable<ActivityCompletion[]> {
+        if (setIds.length === 0) return new Observable(obs => { obs.next([]); obs.complete(); });
+        const completionsRef = collection(this.firestore, 'activity-completion');
+        const q = query(completionsRef, where('set_id', 'in', setIds), orderBy('completed_at', 'desc'));
+        return collectionData(q, {idField: 'id'}).pipe(
+            map((data: any[]) => data.map(item => ({...firestoreToActivityCompletion(item), id: item.id})))
+        ) as Observable<ActivityCompletion[]>;
     }
 }

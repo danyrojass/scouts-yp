@@ -68,6 +68,59 @@
                         </div>
                     </div>
 
+                    <div class="card card-leaderboard">
+                        <div class="card-header">
+                            <h2>Tabla de Posiciones</h2>
+                        </div>
+                        <div class="card-body">
+                            @if (leaderboard().length === 0) {
+                                <div class="empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    <p>Aún no hay puntajes registrados</p>
+                                </div>
+                            } @else {
+                                <table class="leaderboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-position">#</th>
+                                            <th class="col-set">Sección</th>
+                                            <th class="col-type">Tipo</th>
+                                            <th class="col-completions">Actividades</th>
+                                            <th class="col-points">Puntos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (entry of leaderboard(); track entry.set.id; let i = $index) {
+                                            <tr [class.current-set]="entry.set.id === currentUser()?.setId">
+                                                <td class="col-position">
+                                                    @if (i === 0) {
+                                                        <span class="medal gold">1</span>
+                                                    } @else if (i === 1) {
+                                                        <span class="medal silver">2</span>
+                                                    } @else if (i === 2) {
+                                                        <span class="medal bronze">3</span>
+                                                    } @else {
+                                                        <span class="rank">{{ i + 1 }}</span>
+                                                    }
+                                                </td>
+                                                <td class="col-set">
+                                                    <div class="set-name">{{ entry.set.name }}</div>
+                                                </td>
+                                                <td class="col-type">
+                                                    <span class="badge badge-secondary">{{ entry.set.type }}</span>
+                                                </td>
+                                                <td class="col-completions">{{ entry.completionCount }}</td>
+                                                <td class="col-points">
+                                                    <span class="points-value">{{ entry.totalPoints }}</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                        </div>
+                    </div>
+
                     <div class="card card-group">
                         <div class="card-header">
                             <h2>Mi Grupo</h2>
