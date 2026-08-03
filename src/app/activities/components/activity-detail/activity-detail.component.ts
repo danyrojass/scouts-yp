@@ -9,6 +9,9 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {catchError, switchMap, tap} from 'rxjs/operators';
 import {of} from 'rxjs';
+import {ActivityCompletion} from '../../models';
+import {Set} from '../../../sets/models';
+import {SetService} from '../../../sets/services/set.service';
 
 @Component({
     selector: 'app-activity-detail',
@@ -23,9 +26,12 @@ import {of} from 'rxjs';
 export class ActivityDetailComponent {
     errorMessage = signal<string>('');
     isLoading = signal<boolean>(true);
+    completions = signal<ActivityCompletion[]>([]);
+    setsMap = signal<Map<string, Set>>(new Map());
     protected readonly UserType = UserType;
     private route = inject(ActivatedRoute);
     private activityService = inject(ActivityService);
+    private setService = inject(SetService);
     activity = toSignal(
         this.route.paramMap.pipe(
             switchMap(params => {
@@ -35,6 +41,7 @@ export class ActivityDetailComponent {
                     return of(null);
                 }
                 this.isLoading.set(true);
+                this.loadCompletions(id);
                 return this.activityService.getActivityById(id).pipe(
                     tap(() => this.isLoading.set(false)),
                     catchError(err => {
@@ -51,6 +58,29 @@ export class ActivityDetailComponent {
     private authService = inject(AuthService);
     currentUser = this.authService.user;
     private router = inject(NavigationService);
+
+    private async loadCompletions(activityId: string): Promise<void> {
+        try {
+            const data = await this.activityService.getActivityCompletionsByActivityId(activityId);
+            this.completions.set(data);
+
+            const setIds = [...new Set(data.map(c => c.setId))];
+            const sets = await Promise.all(setIds.map(id => this.setService.getSetById(id).toPromise()));
+            const map = new Map<string, Set>();
+            sets.filter((s): s is Set => !!s).forEach(s => map.set(s.id!, s));
+            this.setsMap.set(map);
+        } catch (err) {
+            console.error('Error cargando completaciones:', err);
+        }
+    }
+
+    getSetName(setId: string): string {
+        return this.setsMap().get(setId)?.name ?? 'Desconocida';
+    }
+
+    getTotalEarnedPoints(): number {
+        return this.completions().reduce((sum, c) => sum + c.earnedPoints, 0);
+    }
 
     onEdit(): void {
         const actividad = this.activity();

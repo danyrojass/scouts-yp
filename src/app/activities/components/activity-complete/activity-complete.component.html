@@ -32,7 +32,7 @@
                     <option value="">Selecciona una actividad</option>
                     @for (activity of activities(); track activity.id) {
                         <option [value]="activity.id">
-                            {{ activity.name }} ({{ activity.points }} pts)
+                            {{ activity.name }} — {{ activity.level }} ({{ activity.points }} pts)
                         </option>
                     }
                 </select>
@@ -50,17 +50,50 @@
                         class="form-control"
                         formControlName="setId"
                         id="setId"
+                        [disabled]="!selectedActivity()"
                 >
-                    <option value="">Selecciona una sección</option>
-                    @for (set of userSets(); track set.id) {
+                    <option value="">
+                        {{ selectedActivity() ? 'Selecciona una sección' : 'Primero selecciona una actividad' }}
+                    </option>
+                    @for (set of filteredSets(); track set.id) {
                         <option [value]="set.id">
                             {{ set.name }} ({{ set.type }})
                         </option>
                     }
                 </select>
+                @if (selectedActivity() && filteredSets().length === 0) {
+                    <div class="form-hint">
+                        <span>No hay secciones de nivel "{{ selectedActivity()?.level }}" en tu grupo</span>
+                    </div>
+                }
                 @if (completionForm.get('setId')?.invalid && completionForm.get('setId')?.touched) {
                     <div class="form-error">
                         <span>Selecciona una sección</span>
+                    </div>
+                }
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="earnedPoints">Puntos ganados</label>
+                <input
+                        [ngClass]="{'invalid': completionForm.get('earnedPoints')?.invalid && completionForm.get('earnedPoints')?.touched}"
+                        class="form-control"
+                        formControlName="earnedPoints"
+                        id="earnedPoints"
+                        type="number"
+                        [max]="maxPoints()"
+                        [min]="0"
+                        [disabled]="!selectedActivity()"
+                        (input)="onPointsInput($event)"
+                >
+                @if (selectedActivity()) {
+                    <div class="form-hint">
+                        <span>Máximo: {{ maxPoints() }} pts</span>
+                    </div>
+                }
+                @if (completionForm.get('earnedPoints')?.errors?.['min'] && completionForm.get('earnedPoints')?.touched) {
+                    <div class="form-error">
+                        <span>Los puntos no pueden ser negativos</span>
                     </div>
                 }
             </div>
@@ -83,7 +116,7 @@
 
             <div class="form-actions">
                 <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
-                <button (click)="onSubmit()" class="btn btn-primary" type="button" [disabled]="completionForm.invalid || isLoading()">
+                <button class="btn btn-primary" type="submit" [disabled]="completionForm.invalid || isLoading()">
                     @if (isLoading()) {
                         <app-loading-spinner size="sm"></app-loading-spinner>
                     } @else {

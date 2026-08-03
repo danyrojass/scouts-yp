@@ -95,7 +95,7 @@
 
             <div class="form-actions">
                 <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
-                <button (click)="onSubmit()" class="btn btn-primary" type="button" [disabled]="activityForm.invalid || isLoading">
+                <button class="btn btn-primary" type="submit" [disabled]="activityForm.invalid || isLoading()">
                     @if (isLoading()) {
                         <app-loading-spinner size="sm"></app-loading-spinner>
                     } @else {

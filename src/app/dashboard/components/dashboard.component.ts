@@ -30,6 +30,12 @@ interface GroupedSets {
     sets: Set[];
 }
 
+interface LeaderboardEntry {
+    set: Set;
+    totalPoints: number;
+    completionCount: number;
+}
+
 @Component({
     selector: 'app-dashboard',
     standalone: true,
@@ -73,11 +79,31 @@ export class DashboardComponent implements OnInit {
 
     totalPoints = computed(() => {
         const user = this.currentUser();
-        if (!user?.groupId) return 0;
+        if (!user?.setId) return 0;
 
         return this.completedActivities()
             .filter(c => c.setId === user.setId)
             .reduce((sum, c) => sum + c.earnedPoints, 0);
+    });
+
+    leaderboard = computed(() => {
+        const sets = this.groupSets();
+        const completions = this.completedActivities();
+        const entries: LeaderboardEntry[] = [];
+
+        for (const set of sets) {
+            const setCompletions = completions.filter(c => c.setId === set.id);
+            if (setCompletions.length > 0) {
+                entries.push({
+                    set,
+                    totalPoints: setCompletions.reduce((sum, c) => sum + c.earnedPoints, 0),
+                    completionCount: setCompletions.length
+                });
+            }
+        }
+
+        entries.sort((a, b) => b.totalPoints - a.totalPoints);
+        return entries;
     });
 
     isLoading = computed(() => this.currentUser() === null);
@@ -105,12 +131,11 @@ export class DashboardComponent implements OnInit {
                 return;
             }
 
-            const [group, users, allSets, allActivities, completions] = await Promise.all([
+            const [group, users, allSets, allActivities] = await Promise.all([
                 firstValueFrom(this.groupService.getGroupById(user.groupId!)),
                 firstValueFrom(this.userService.getUsersByGroup(user.groupId!)),
                 firstValueFrom(this.setService.getSets()),
-                firstValueFrom(this.activityService.getActivities()),
-                firstValueFrom(this.activityService.getActivityCompletions(user.setId!))
+                firstValueFrom(this.activityService.getActivities())
             ]);
 
             const isDirigente = user.type === UserType.DIRIGENTE;
@@ -127,6 +152,11 @@ export class DashboardComponent implements OnInit {
                 }
                 filteredActivities = filteredActivities.filter(a => a.level === user.level);
             }
+
+            const setIds = filteredSets.map(s => s.id!).filter(Boolean);
+            const completions = setIds.length > 0
+                ? await firstValueFrom(this.activityService.getCompletionsBySetIds(setIds))
+                : [];
 
             const results: DashboardData = {
                 group: group ?? undefined,

@@ -34,6 +34,39 @@
             </div>
         </div>
 
+        @if (completions().length > 0) {
+            <div class="data-card">
+                <h2>Completaciones ({{ completions().length }})</h2>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Sección</th>
+                                <th>Puntos ganados</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (completion of completions(); track completion.id) {
+                                <tr>
+                                    <td>{{ getSetName(completion.setId) }}</td>
+                                    <td>
+                                        <span class="badge badge-secondary">
+                                            {{ completion.earnedPoints }} / {{ activity()?.points }} pts
+                                        </span>
+                                    </td>
+                                    <td>{{ completion.completedAt | date:'dd/MM/yyyy' }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="detail-footer">
+                    <strong>Total puntos ganados: {{ getTotalEarnedPoints() }} / {{ (completions().length * (activity()?.points ?? 0)) }} pts</strong>
+                </div>
+            </div>
+        }
+
         <div class="actions">
             <button (click)="onBack()" class="btn btn-secondary">Regresar</button>
         </div>

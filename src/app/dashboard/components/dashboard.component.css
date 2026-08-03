@@ -130,6 +130,10 @@
     grid-column: span 6;
 }
 
+.card-leaderboard {
+    grid-column: 1 / -1;
+}
+
 .card-header {
     padding: var(--space-4) var(--space-5);
     border-bottom: 1px solid var(--neutral-100);
@@ -311,6 +315,97 @@
     font-size: 0.8125rem;
 }
 
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th {
+    background: var(--neutral-50);
+    border-bottom: 2px solid var(--neutral-200);
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--neutral-500);
+    text-align: left;
+}
+
+.leaderboard-table td {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--neutral-100);
+}
+
+.leaderboard-table tbody tr:hover {
+    background: var(--neutral-50);
+}
+
+.leaderboard-table tbody tr.current-set {
+    background: var(--primary-50);
+}
+
+.leaderboard-table .col-position {
+    width: 50px;
+    text-align: center;
+}
+
+.leaderboard-table .col-points {
+    text-align: right;
+    font-weight: 600;
+}
+
+.leaderboard-table .col-completions {
+    text-align: center;
+}
+
+.medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: white;
+}
+
+.medal.gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.medal.silver {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+
+.medal.bronze {
+    background: linear-gradient(135deg, #d97706, #92400e);
+}
+
+.rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    color: var(--neutral-500);
+}
+
+.set-name {
+    font-weight: 500;
+    color: var(--neutral-900);
+}
+
+.points-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-700);
+}
+
 @media (max-width: 1024px) {
     .stats-row {
         grid-template-columns: repeat(2, 1fr);
@@ -321,6 +416,10 @@
     .card-members,
     .card-sections {
         grid-column: span 6;
+    }
+
+    .card-leaderboard {
+        grid-column: 1 / -1;
     }
 }
 
@@ -336,7 +435,8 @@
     .card-group,
     .card-activities,
     .card-members,
-    .card-sections {
+    .card-sections,
+    .card-leaderboard {
         grid-column: span 1;
     }
 
@@ -346,5 +446,10 @@
 
     .group-meta {
         grid-template-columns: 1fr;
+    }
+
+    .leaderboard-table .col-type,
+    .leaderboard-table .col-completions {
+        display: none;
     }
 }
