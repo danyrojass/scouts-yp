@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "node set-env.js && ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "seed:activities": "node scripts/seed-activities.mjs"
   },
   "prettier": {
     "overrides": [
@@ -41,6 +42,7 @@
     "@ngx-env/builder": "^21.0.1",
     "@types/jasmine": "~5.1.0",
     "dotenv": "^17.4.2",
+    "firebase-admin": "^14.5.0",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
