@@ -96,14 +96,37 @@ export class DashboardComponent implements OnInit {
         return groupByLevel(rows);
     });
 
+    isDirigente = computed(() => this.currentUser()?.type === UserType.DIRIGENTE);
+
+    /**
+     * Dirigente: puntos de todas las secciones del grupo.
+     * Beneficiario: puntos de su propia sección.
+     */
     totalPoints = computed(() => {
         const user = this.currentUser();
-        if (!user?.setId) return 0;
+        if (!user) return 0;
 
-        return this.completedActivities()
+        const completions = this.completedActivities();
+
+        if (user.type === UserType.DIRIGENTE) {
+            return completions.reduce((sum, c) => sum + c.earnedPoints, 0);
+        }
+
+        if (!user.setId) return 0;
+
+        return completions
             .filter(c => c.setId === user.setId)
             .reduce((sum, c) => sum + c.earnedPoints, 0);
     });
+
+    pointsLabel = computed(() =>
+        this.isDirigente() ? 'Puntos del grupo' : 'Puntos de mi sección'
+    );
+
+    /** Actividades distintas con al menos una completación (no registros de completación). */
+    completedActivitiesCount = computed(() =>
+        new Set(this.completedActivities().map(c => c.activityId)).size
+    );
 
     leaderboard = computed(() => {
         const sets = this.groupSets();
