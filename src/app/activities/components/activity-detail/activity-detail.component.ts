@@ -8,7 +8,7 @@ import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/component
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {catchError, switchMap, tap} from 'rxjs/operators';
-import {of} from 'rxjs';
+import {firstValueFrom, of} from 'rxjs';
 import {ActivityCompletion} from '../../models';
 import {Set} from '../../../sets/models';
 import {SetService} from '../../../sets/services/set.service';
@@ -64,8 +64,9 @@ export class ActivityDetailComponent {
             const data = await this.activityService.getActivityCompletionsByActivityId(activityId);
             this.completions.set(data);
 
-            const setIds = [...new Set(data.map(c => c.setId))];
-            const sets = await Promise.all(setIds.map(id => this.setService.getSetById(id).toPromise()));
+            const setIds = [...new Set(data.map(c => c.setId).filter((id): id is string => !!id))];
+            // firstValueFrom: docData es un listener que nunca completa, toPromise() se colgaría.
+            const sets = await Promise.all(setIds.map(id => firstValueFrom(this.setService.getSetById(id))));
             const map = new Map<string, Set>();
             sets.filter((s): s is Set => !!s).forEach(s => map.set(s.id!, s));
             this.setsMap.set(map);

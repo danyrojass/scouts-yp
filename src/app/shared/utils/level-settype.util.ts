@@ -24,3 +24,33 @@ export function getSetsForLevel<T extends { type: SetType }>(sets: T[], level: U
     if (!target) return sets;
     return sets.filter(s => s.type === target);
 }
+
+/** Orden canónico de niveles (de menor a mayor). */
+export const USER_LEVEL_ORDER: UserLevel[] = [
+    UserLevel.LOBATO,
+    UserLevel.SCOUT,
+    UserLevel.CAMINANTE,
+    UserLevel.ROVER,
+    UserLevel.JEFE,
+];
+
+export interface GroupByLevel<T> {
+    level: UserLevel;
+    setType: SetType | null;
+    items: T[];
+}
+
+/**
+ * Agrupa actividades por `level` respetando USER_LEVEL_ORDER y expone el
+ * SetType que corresponde a cada nivel (Lobato→Seisena, Scout→Patrulla, ...).
+ * Los grupos sin items se omiten.
+ */
+export function groupByLevel<T extends { level: UserLevel }>(items: T[]): GroupByLevel<T>[] {
+    return USER_LEVEL_ORDER
+        .map(level => ({
+            level,
+            setType: levelToSetType(level),
+            items: items.filter(item => item.level === level),
+        }))
+        .filter(group => group.items.length > 0);
+}

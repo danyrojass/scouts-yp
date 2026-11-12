@@ -30,6 +30,24 @@
     overflow-x: auto;
 }
 
+.level-group + .level-group {
+    border-top: 1px solid var(--neutral-200);
+}
+
+.level-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-700);
+    background: var(--primary-50);
+}
+
 .data-table {
     width: 100%;
     border-collapse: collapse;

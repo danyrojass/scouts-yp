@@ -243,6 +243,20 @@
     font-size: 0.8125rem;
 }
 
+.activity-table .level-row td {
+    padding: var(--space-2);
+    background: var(--primary-50);
+}
+
+.activity-table .level-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-700);
+    margin-right: var(--space-2);
+}
+
 .group-info {
     margin-bottom: var(--space-4);
 }
@@ -318,6 +332,14 @@
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
+}
+
+.leaderboard-group + .leaderboard-group {
+    margin-top: var(--space-4);
+}
+
+.leaderboard-group .section-title {
+    margin-bottom: var(--space-2);
 }
 
 .leaderboard-table th {

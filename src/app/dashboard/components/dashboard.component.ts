@@ -8,10 +8,11 @@ import {UserService} from '../../users/services/user.service';
 import {SetService} from '../../sets/services/set.service';
 import {ActivityService} from '../../activities/services/activity.service';
 
-import {User, UserType} from '../../users/models';
+import {User, UserLevel, UserType} from '../../users/models';
 import {Group} from '../../groups/models';
 import {Set, SetType} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
+import {groupByLevel} from '../../shared/utils/level-settype.util';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
 import {DatePipe} from "@angular/common";
@@ -34,6 +35,12 @@ interface LeaderboardEntry {
     set: Set;
     totalPoints: number;
     completionCount: number;
+}
+
+interface CompletedActivityItem {
+    level: UserLevel;
+    name: string;
+    completion: ActivityCompletion;
 }
 
 @Component({
@@ -71,11 +78,23 @@ export class DashboardComponent implements OnInit {
         return grouped;
     });
 
-    getActivityName(activityId: string | null | undefined): string {
-        if (!activityId) return 'Unknown';
-        const activity = this.activities().find(a => a.id === activityId);
-        return activity?.name ?? 'Unknown';
-    }
+    /**
+     * Actividad reciente agrupada por nivel, mostrando el SetType correspondiente
+     * (Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan).
+     */
+    groupedCompletedActivities = computed(() => {
+        const activitiesById = new Map(this.activities().map(a => [a.id!, a]));
+        const rows: CompletedActivityItem[] = [];
+
+        for (const completion of this.completedActivities()) {
+            const activity = activitiesById.get(completion.activityId);
+            if (activity) {
+                rows.push({level: activity.level, name: activity.name, completion});
+            }
+        }
+
+        return groupByLevel(rows);
+    });
 
     totalPoints = computed(() => {
         const user = this.currentUser();
@@ -105,6 +124,19 @@ export class DashboardComponent implements OnInit {
         entries.sort((a, b) => b.totalPoints - a.totalPoints);
         return entries;
     });
+
+    /**
+     * Tabla de posiciones separada por tipo de sección (Seisena, Patrulla, Equipo,
+     * Clan) para poder comparar contra pares del mismo tipo.
+     */
+    groupedLeaderboard = computed(() =>
+        Object.values(SetType)
+            .map(type => ({
+                type,
+                entries: this.leaderboard().filter(entry => entry.set.type === type),
+            }))
+            .filter(group => group.entries.length > 0)
+    );
 
     isLoading = computed(() => this.currentUser() === null);
 
