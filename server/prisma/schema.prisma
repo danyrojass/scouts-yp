@@ -129,9 +129,9 @@ model ActivityCompletion {
   completedAt  DateTime @default(now())
   earnedPoints Int
 
-  activity Activity @relation(fields: [activityId], references: [id])
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id])
-  set      Set?     @relation(fields: [setId], references: [id])
+  set      Set?     @relation(fields: [setId], references: [id], onDelete: SetNull)
   group    Group    @relation(fields: [groupId], references: [id])
 
   @@unique([activityId, userId])

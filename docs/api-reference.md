@@ -147,6 +147,52 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 
 El `groupId` sale del contexto de autenticación; no se acepta en el body.
 
+## Activities
+
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | `/activities` | cualquier autenticado | listado paginado/filtrado del grupo |
+| GET | `/activities/:id` | cualquier autenticado | detalle (404 si es de otro grupo) |
+| POST | `/activities` | `DIRIGENTE`+ | crear |
+| PATCH | `/activities/:id` | `DIRIGENTE`+ | editar |
+| DELETE | `/activities/:id` | `ADMIN`+ | borrado físico; arrastra sus completions |
+
+### Query params `GET /activities`
+`level?` (`LOBATO`|`SCOUT`|`CAMINANTE`|`ROVER`|`JEFE`), `search?` (name/key,
+case-insensitive), `limit`, `offset`, `sortBy`
+(`createdAt`|`updatedAt`|`name`|`key`|`level`|`points`|`scheduledAt`), `sortOrder`.
+
+### Body `POST /activities` / `PATCH /activities/:id`
+`{ name (min 2), key (min 2), level (UserLevel), points (int ≥ 0), description?,
+scheduledAt? (ISO 8601) }` — en PATCH todos opcionales y `scheduledAt: null` lo limpia.
+
+`key` es único por grupo: si se repite, `409`.
+
+## Completions
+
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | `/completions` | cualquier autenticado | listado paginado/filtrado del grupo |
+| POST | `/completions` | cualquier autenticado | registrar una completion |
+
+### Query params `GET /completions`
+`activityId?`, `userId?`, `setId?`, `limit`, `offset`, `sortBy`
+(`completedAt`|`earnedPoints`, default `completedAt`), `sortOrder`.
+
+### Body `POST /completions`
+`{ activityId, userId?, setId?, earnedPoints?, completedAt? (ISO 8601) }`
+
+- `userId` omitido → se registra para el usuario autenticado.
+- `earnedPoints` omitido → usa `activity.points`; no puede superarlos (`400`).
+- Un usuario no puede completar dos veces la misma actividad (`409`).
+- `BENEFICIARIO` solo puede registrarse a sí mismo y a su propio `setId` (`403`).
+- Actividad, usuario y set deben pertenecer al grupo (`404`).
+- `DIRIGENTE`+ puede registrar para cualquier usuario del grupo, indicando `setId`.
+
 ## Códigos de error comunes
 
 | Código | Caso |
@@ -155,7 +201,7 @@ El `groupId` sale del contexto de autenticación; no se acepta en el body.
 | 401 | token faltante, inválido o expirado |
 | 403 | rol insuficiente, usuario sin grupo o `SUPER_ADMIN` sin `X-Group-Id` |
 | 404 | recurso no encontrado (scoped a grupo, no se filtra existencia cross-tenant) |
-| 409 | email duplicado o intento de dejar al grupo sin administradores |
+| 409 | email, `key` de actividad o completion duplicados; intento de dejar al grupo sin administradores |
 | 500 | error no manejado |
 
 ## Notas de producción

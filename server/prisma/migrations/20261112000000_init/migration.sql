@@ -172,7 +172,7 @@ ALTER TABLE "sets" ADD CONSTRAINT "sets_groupId_fkey" FOREIGN KEY ("groupId") RE
 ALTER TABLE "activities" ADD CONSTRAINT "activities_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "activity_completions" ADD CONSTRAINT "activity_completions_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "activities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "activity_completions" ADD CONSTRAINT "activity_completions_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "activities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "activity_completions" ADD CONSTRAINT "activity_completions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -200,7 +200,6 @@ ALTER TABLE "progressions" ADD CONSTRAINT "progressions_approvedById_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "progressions" ADD CONSTRAINT "progressions_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
 
 -- Solo el SUPER_ADMIN de plataforma puede no pertenecer a un grupo
 ALTER TABLE "users" ADD CONSTRAINT "users_group_required"

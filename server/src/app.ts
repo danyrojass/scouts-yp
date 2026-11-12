@@ -11,6 +11,8 @@ import { authRouter } from './modules/auth/auth.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { groupsRouter } from './modules/groups/groups.routes.js';
 import { setsRouter } from './modules/sets/sets.routes.js';
+import { activitiesRouter } from './modules/activities/activities.routes.js';
+import { completionsRouter } from './modules/completions/completions.routes.js';
 
 const app = express();
 
@@ -25,6 +27,8 @@ app.use(`${env.API_PREFIX}/auth`, authRouter);
 app.use(`${env.API_PREFIX}/users`, usersRouter);
 app.use(`${env.API_PREFIX}/groups`, groupsRouter);
 app.use(`${env.API_PREFIX}/sets`, setsRouter);
+app.use(`${env.API_PREFIX}/activities`, activitiesRouter);
+app.use(`${env.API_PREFIX}/completions`, completionsRouter);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: { message: 'Route not found' } });
