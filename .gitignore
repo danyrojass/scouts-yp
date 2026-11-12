@@ -18,3 +18,7 @@ backups/
 .DS_Store
 Thumbs.db
 *.log
+
+# Firebase Admin (seed de datos)
+service-account*.json
+*-adminsdk-*.json

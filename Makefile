@@ -1,4 +1,4 @@
-.PHONY: up down build restart logs psql seed migrate status
+.PHONY: up down build restart logs psql seed migrate status fullstack
 
 # ─── Production (Docker) ───────────────────────────────────────
 
@@ -55,3 +55,11 @@ db-generate:
 
 deploy: build up migrate seed
 	@echo "Deployment complete"
+
+# ─── Railway (single full-stack container) ─────────────────────
+
+fullstack:
+	docker build -t scouts-yp-fullstack .
+
+fullstack-run: fullstack
+	docker run --rm -p 8080:80 --env-file .env scouts-yp-fullstack
