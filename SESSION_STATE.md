@@ -1,6 +1,6 @@
 # Session State — Scout YP Migration
 
-## Estado actual: backend multi-grupo (Fases A–E completas)
+## Estado actual: backend multi-grupo (Fases A–F completas)
 
 **Nov 12, 2026** — El backend pasó de "un grupo autogestionado" a **plataforma
 multi-grupo**: `Group` es el tenant y cada usuario pertenece a un solo grupo, salvo
@@ -66,8 +66,8 @@ Trabajo hecho en esta etapa (sobre la app de Vercel):
 - `GET /sets/:id` incluye grupo y `_count` de usuarios
 
 **Phase 5 — Activities + Completions** ✅
-**Phase 6 — Payments + Progression** ❌
-**Phase 7 — Dashboard** ❌
+**Phase 6 — Payments + Progression** ✅
+**Phase 7 — Dashboard** ✅ (agregados en el frontend sobre endpoints scoped)
 **Phase 8 — Firebase Decommission** ❌ (frontend still on Firebase)
 
 ### Infrastructure Fixes (this session)
@@ -205,10 +205,24 @@ Next phase: **Phase 5 — Activities + Completions**, then Payments/Progression,
 - Verificado en DB temporal + API aislada: duplicados, puntos inválidos, reglas de
   beneficiario, cross-tenant 404, filtros/orden y borrado en cascada.
 
+### Fase F — Payments + Progressions + Dashboard
+
+- **Payments** (`/payments`): alta `DIRIGENTE+`, baja `ADMIN+`, listado con
+  `userId`/`search`/`from`/`to`. `BENEFICIARIO` solo ve sus propios pagos.
+  `amount` es `Decimal` y se serializa como string.
+- **Progressions** (`/progressions`): alta pendiente `DIRIGENTE+` (`fromLevel` se
+  toma del usuario y `toLevel` debe ser superior), aprobación `DIRIGENTE+` que
+  actualiza el nivel del usuario en la misma transacción, baja `ADMIN+`.
+  `BENEFICIARIO` solo ve sus propias progresiones. Re-aprobar o detectar un nivel
+  desactualizado devuelve 409.
+- **Dashboard**: sin endpoint propio. Los agregados de la Fase 7 se calculan en el
+  frontend sobre `users`, `sets`, `activities` y `completions`, ya scoped por grupo.
+- Verificado en DB temporal: roles, privacidad por beneficiario, cross-tenant 404,
+  filtros/orden, aprobación con cambio de nivel y conflictos 409.
+
 ### Pendiente
 
 - **Fase D**: import xlsx sin columna de grupo e invitaciones (opcional).
-- **Fase F**: Payments/Progression/Dashboard scoped.
 - **Fase G (Phase 8)**: frontend Firestore → API, `roleGuard`, registro sin selector
   de grupo, puente de contraseñas desde Firebase Auth.
 - **Fase H**: suite cross-tenant automatizada, rate limit y cierre de `firestore.rules`.

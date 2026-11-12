@@ -13,6 +13,8 @@ import { groupsRouter } from './modules/groups/groups.routes.js';
 import { setsRouter } from './modules/sets/sets.routes.js';
 import { activitiesRouter } from './modules/activities/activities.routes.js';
 import { completionsRouter } from './modules/completions/completions.routes.js';
+import { paymentsRouter } from './modules/payments/payments.routes.js';
+import { progressionsRouter } from './modules/progressions/progressions.routes.js';
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use(`${env.API_PREFIX}/groups`, groupsRouter);
 app.use(`${env.API_PREFIX}/sets`, setsRouter);
 app.use(`${env.API_PREFIX}/activities`, activitiesRouter);
 app.use(`${env.API_PREFIX}/completions`, completionsRouter);
+app.use(`${env.API_PREFIX}/payments`, paymentsRouter);
+app.use(`${env.API_PREFIX}/progressions`, progressionsRouter);
 
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ success: false, error: { message: 'Route not found' } });

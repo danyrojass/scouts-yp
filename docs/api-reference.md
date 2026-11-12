@@ -193,6 +193,60 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 - Actividad, usuario y set deben pertenecer al grupo (`404`).
 - `DIRIGENTE`+ puede registrar para cualquier usuario del grupo, indicando `setId`.
 
+## Payments
+
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | `/payments` | cualquier autenticado | listado paginado/filtrado |
+| GET | `/payments/:id` | cualquier autenticado | detalle (404 si es de otro grupo o de otro usuario) |
+| POST | `/payments` | `DIRIGENTE`+ | registrar pago |
+| DELETE | `/payments/:id` | `ADMIN`+ | borrado físico |
+
+### Query params `GET /payments`
+`userId?`, `search?` (concept), `from?`/`to?` (ISO 8601 sobre `paidAt`), `limit`,
+`offset`, `sortBy` (`createdAt`|`paidAt`|`amount`|`concept`), `sortOrder`.
+
+`BENEFICIARIO` solo ve y lee sus propios pagos (el resto 404).
+
+### Body `POST /payments`
+`{ userId, amount (número positivo, 2 decimales), concept (min 2), currency? (ISO 4217,
+default `ARS`), paidAt? (ISO 8601) }`
+
+`amount` se serializa como string decimal (comportamiento de Prisma `Decimal`).
+
+## Progressions
+
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | `/progressions` | cualquier autenticado | listado paginado/filtrado |
+| GET | `/progressions/:id` | cualquier autenticado | detalle (404 si es de otro grupo o usuario) |
+| POST | `/progressions` | `DIRIGENTE`+ | registrar ascenso pendiente |
+| PATCH | `/progressions/:id/approve` | `DIRIGENTE`+ | aprobar y actualizar el nivel del usuario |
+| DELETE | `/progressions/:id` | `ADMIN`+ | borrado físico |
+
+### Query params `GET /progressions`
+`userId?`, `status?` (`pending`|`approved`), `limit`, `offset`, `sortBy`
+(`createdAt`|`approvedAt`), `sortOrder`.
+
+`BENEFICIARIO` solo ve sus propias progresiones.
+
+### Body `POST /progressions`
+`{ userId, toLevel (UserLevel) }`
+
+`fromLevel` se toma del nivel actual del usuario; `toLevel` debe ser superior (`400`).
+Aprobar dos veces o aprobar una progresión cuyo `fromLevel` ya no coincide con el nivel
+actual devuelve `409`.
+
+## Dashboard
+
+No hay endpoint de dashboard: los agregados (puntos, ranking por tipo de sección,
+actividad reciente) se calculan en el frontend sobre `users`, `sets`, `activities` y
+`completions`, todos ya scoped por `groupId`.
+
 ## Códigos de error comunes
 
 | Código | Caso |
@@ -201,7 +255,7 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 | 401 | token faltante, inválido o expirado |
 | 403 | rol insuficiente, usuario sin grupo o `SUPER_ADMIN` sin `X-Group-Id` |
 | 404 | recurso no encontrado (scoped a grupo, no se filtra existencia cross-tenant) |
-| 409 | email, `key` de actividad o completion duplicados; intento de dejar al grupo sin administradores |
+| 409 | email, `key` de actividad o completion duplicados; progresión ya aprobada o nivel desactualizado; intento de dejar al grupo sin administradores |
 | 500 | error no manejado |
 
 ## Notas de producción

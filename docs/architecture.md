@@ -71,8 +71,8 @@ Un solo contenedor: nginx sirve el frontend y proxya `/api/` a `127.0.0.1:3000`
 | `groups` | ✅ | CRUD + búsqueda |
 | `sets` | ✅ | CRUD + filtros (type/groupId/search) |
 | `activities` + `completions` | ✅ | CRUD de actividades + registro de completions (scoped) |
-| `payments` + `progression` | ❌ | Phase 6 |
-| `dashboard` | ❌ | Phase 7 |
+| `payments` + `progressions` | ✅ | pagos y ascensos (scoped, con aprobación) |
+| `dashboard` | n/a | agregados en el frontend sobre endpoints scoped |
 
 ## Frontend (`src/`)
 
