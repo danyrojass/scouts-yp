@@ -10,6 +10,7 @@ import { healthRouter } from './modules/health/health.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 import { groupsRouter } from './modules/groups/groups.routes.js';
+import { setsRouter } from './modules/sets/sets.routes.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(`${env.API_PREFIX}/health`, healthRouter);
 app.use(`${env.API_PREFIX}/auth`, authRouter);
 app.use(`${env.API_PREFIX}/users`, usersRouter);
 app.use(`${env.API_PREFIX}/groups`, groupsRouter);
+app.use(`${env.API_PREFIX}/sets`, setsRouter);
 
 app.use(errorHandler);
 
