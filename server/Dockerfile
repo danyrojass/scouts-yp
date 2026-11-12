@@ -18,7 +18,7 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-RUN apk add --no-cache curl && \
+RUN apk add --no-cache curl openssl libc6-compat && \
     addgroup --system app && \
     adduser --system --ingroup app app
 
@@ -28,7 +28,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY package.json ./
 
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
+    chown -R app:app /app
 
 USER app
 

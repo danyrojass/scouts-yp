@@ -9,6 +9,6 @@ export default defineConfig({
   sourcemap: true,
   minify: true,
   dts: false,
-  bundle: false,
+  bundle: true,
   tsconfig: './tsconfig.json',
 });
