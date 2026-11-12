@@ -17,7 +17,7 @@ export class AuthController {
 
     this.setCookies(res, result.accessToken, result.refreshToken);
 
-    res.status(201).json({ success: true, data: { user: result.user } });
+    res.status(201).json({ success: true, data: { user: result.user, group: result.group } });
   }
 
   async login(req: Request, res: Response): Promise<void> {

@@ -128,10 +128,10 @@ src/app/
 
 ## Modelo de Datos
 
-El esquema relacional completo (10 modelos) esta en `server/prisma/schema.prisma`.
-Incluye: Organization, User, Group, Set, Activity, ActivityCompletion, Payment,
-RefreshToken y Progression. Cada entidad esta scoped por `organizationId`
-(multi-tenant).
+El esquema relacional completo esta en `server/prisma/schema.prisma`.
+Incluye: Group (tenant), User, Set, Activity, ActivityCompletion, Payment,
+RefreshToken y Progression. Cada entidad esta scoped por `groupId` (multi-tenant:
+un Grupo Scout = un tenant).
 
 ## Comandos Disponibles
 

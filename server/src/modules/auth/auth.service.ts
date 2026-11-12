@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { env } from '../../config/env.js';
 import { RegisterDto } from './dto/register.dto.js';
@@ -10,6 +10,14 @@ import { UnauthorizedException } from '../../common/exceptions/unauthorized.exce
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
 import { HttpException } from '../../common/exceptions/http.exception.js';
 
+interface TokenUser {
+  id: string;
+  email: string;
+  role: Role;
+  groupId: string | null;
+  tokenVersion: number;
+}
+
 export class AuthService {
   private prisma: PrismaClient;
 
@@ -17,6 +25,10 @@ export class AuthService {
     this.prisma = PrismaService.getInstance();
   }
 
+  /**
+   * Registro público: solo permite crear un grupo nuevo. Quien lo crea queda
+   * como ADMIN de ese grupo. Los demás miembros los da de alta un dirigente.
+   */
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
@@ -24,36 +36,48 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const slug = this.buildSlug(dto.groupName);
 
-    const orgName = dto.organizationName || `${dto.name}'s Organization`;
-    const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + crypto.randomBytes(4).toString('hex');
+    const { user, group } = await this.prisma.$transaction(async (tx) => {
+      const group = await tx.group.create({
+        data: {
+          name: dto.groupName,
+          number: dto.groupNumber,
+          city: dto.groupCity,
+          slug,
+        },
+      });
 
-    const org = await this.prisma.organization.create({
-      data: { name: orgName, slug },
+      const user = await tx.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          name: dto.name,
+          type: dto.type ?? 'DIRIGENTE',
+          role: 'ADMIN',
+          level: dto.level ?? 'JEFE',
+          groupId: group.id,
+        },
+      });
+
+      return { user, group };
     });
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        name: dto.name,
-        type: dto.type ?? 'DIRIGENTE',
-        role: 'ADMIN',
-        level: dto.level ?? 'JEFE',
-        organizationId: org.id,
-      },
-    });
-
-    const tokens = await this.generateTokens(user.id, user.email, user.role, user.organizationId);
+    const tokens = await this.generateTokens(user);
 
     return {
       user: this.sanitizeUser(user),
+      group,
       ...tokens,
     };
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      include: { group: true },
+    });
+
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -67,7 +91,11 @@ export class AuthService {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role, user.organizationId);
+    if (user.groupId && (!user.group || !user.group.isActive)) {
+      throw new UnauthorizedException('Group is inactive');
+    }
+
+    const tokens = await this.generateTokens(user);
 
     return {
       user: this.sanitizeUser(user),
@@ -78,11 +106,19 @@ export class AuthService {
   async refresh(refreshToken: string) {
     const stored = await this.prisma.refreshToken.findUnique({
       where: { token: refreshToken },
-      include: { user: true },
+      include: { user: { include: { group: true } } },
     });
 
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (!stored.user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (stored.user.groupId && (!stored.user.group || !stored.user.group.isActive)) {
+      throw new UnauthorizedException('Group is inactive');
     }
 
     await this.prisma.refreshToken.update({
@@ -90,14 +126,7 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    const tokens = await this.generateTokens(
-      stored.user.id,
-      stored.user.email,
-      stored.user.role,
-      stored.user.organizationId,
-    );
-
-    return tokens;
+    return this.generateTokens(stored.user);
   }
 
   async logout(refreshToken: string) {
@@ -108,21 +137,27 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { group: true },
+    });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
     return this.sanitizeUser(user);
   }
 
-  private async generateTokens(
-    userId: string,
-    email: string,
-    role: string,
-    organizationId: string,
-  ) {
+  private async generateTokens(user: TokenUser) {
     const accessToken = jwt.sign(
-      { sub: userId, email, role, organizationId },
+      {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        groupId: user.groupId,
+        tokenVersion: user.tokenVersion,
+      },
       env.JWT_SECRET,
       { expiresIn: env.JWT_EXPIRES_IN as any },
     );
@@ -134,12 +169,21 @@ export class AuthService {
     await this.prisma.refreshToken.create({
       data: {
         token: rawRefreshToken,
-        userId,
+        userId: user.id,
         expiresAt,
       },
     });
 
     return { accessToken, refreshToken: rawRefreshToken };
+  }
+
+  private buildSlug(name: string): string {
+    const base = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return `${base || 'grupo'}-${crypto.randomBytes(4).toString('hex')}`;
   }
 
   private sanitizeUser(user: any) {

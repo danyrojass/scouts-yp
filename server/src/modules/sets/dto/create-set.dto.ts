@@ -8,8 +8,4 @@ export class CreateSetDto {
 
   @IsEnum(SetType)
   type!: SetType;
-
-  @IsString()
-  @MinLength(1)
-  groupId!: string;
 }

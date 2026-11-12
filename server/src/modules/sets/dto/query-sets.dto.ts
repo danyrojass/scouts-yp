@@ -9,9 +9,5 @@ export class QuerySetsDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
-  groupId?: string;
-
-  @IsOptional()
-  @IsString()
   search?: string;
 }

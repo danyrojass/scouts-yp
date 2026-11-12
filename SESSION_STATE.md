@@ -1,6 +1,13 @@
 # Session State — Scout YP Migration
 
-## Estado actual: refactor de backend EN PAUSA
+## Estado actual: backend multi-grupo (Fases A–C completas)
+
+**Nov 12, 2026** — El backend pasó de "un grupo autogestionado" a **plataforma
+multi-grupo**: `Group` es el tenant y cada usuario pertenece a un solo grupo, salvo
+el `SUPER_ADMIN` de plataforma. Detalle de la sesión al final del documento; plan en
+`C:\Users\danyr\.opencode\plan\multi-grupo-multitenant.md`.
+
+## Historial
 
 **Nov 11, 2026** — Se pausa la dockerización y el despliegue a un environment en la nube.
 La aplicación que corre en **Vercel** (Angular + Firebase Auth + Firestore) es la que se
@@ -126,3 +133,69 @@ Next phase: **Phase 5 — Activities + Completions**, then Payments/Progression,
 - **Tabla de posiciones separada por tipo de sección** (Seisena, Patrulla, Equipo,
   Clan): cada grupo tiene su propio ranking y medallas, para comparar pares del mismo
   tipo. Se quitó la columna "Tipo" (ahora es el header de cada grupo).
+
+## Nov 12, 2026 — Plataforma multi-grupo (backend, Fases A–C)
+
+### Modelo nuevo
+
+- **`Group` = tenant**. Se eliminaron `Organization` y el `Group` anidado; ahora
+  `Group` tiene `name`, `number`, `city`, `slug` único e `isActive`.
+- **`User.groupId`** (`String?`) apunta al grupo; `email` es único global.
+  `groupId` solo puede ser nulo para `SUPER_ADMIN` (constraint SQL
+  `users_group_required`).
+- **Roles**: `BENEFICIARIO < DIRIGENTE < ADMIN` (por grupo) + `SUPER_ADMIN`
+  (plataforma, sin grupo).
+- **`User.tokenVersion`**: se incrementa al cambiar rol, grupo o estado; los JWT
+  viejos dejan de valer sin esperar al vencimiento.
+- Todas las entidades (`sets`, `activities`, `activity_completions`, `payments`,
+  `progressions`) tienen `groupId` e índice.
+
+### Auth y contexto
+
+- `POST /auth/register` crea `Group` + usuario `ADMIN` **en una transacción**; es el
+  único alta pública. Los demás miembros los crea un dirigente.
+- JWT con `groupId` y `tokenVersion`. `authenticate` valida `isActive` y
+  `tokenVersion` contra la base.
+- `requireGroup` resuelve `req.groupId`: para roles de grupo sale **siempre del JWT**;
+  `SUPER_ADMIN` debe enviar `X-Group-Id`, validado contra la base y auditado en el log.
+- `requireRole(...roles)` exige rol exacto; `requireAtLeast(role)` usa la jerarquía.
+- Login y refresh rechazan usuarios/grupos inactivos.
+
+### Scoping y reglas
+
+- `users`, `sets` y `groups` scopeados por `groupId`; cross-tenant responde **404**
+  (no se filtra la existencia de recursos de otro grupo).
+- `groupId` no se acepta en body/query (el DTO lo rechaza con 400).
+- `setId` debe pertenecer al mismo grupo.
+- `DIRIGENTE` no crea ni edita `ADMIN`; nadie asigna `SUPER_ADMIN` por API.
+- No se puede degradar/desactivar al último `ADMIN` activo del grupo (409).
+- `GET/PATCH /groups/me` para `ADMIN`; listado/alta/edición/baja global de grupos
+  solo `SUPER_ADMIN`.
+
+### Migración y seed
+
+- Se **regeneró** la migración inicial (`20261112000000_init`) porque el backend no
+  tenía datos productivos. Incluye el `CHECK` de grupo obligatorio.
+- `prisma/seed.ts`: grupo demo + `admin@scouts.dev` / `admin123` y
+  `superadmin@scouts.dev` / `superadmin123`.
+- **DBs existentes con el esquema viejo** (incluida la dev `scouts_yp`) requieren
+  `npx prisma migrate reset` antes de aplicar la nueva migración.
+
+### Verificación
+
+- `tsc --noEmit` OK.
+- Pruebas manuales contra la API en un puerto aislado y DB temporal
+  (`scouts_yp_tenant_test`): registro, scoping, cross-tenant 404, `setId` ajeno 404,
+  reglas de rol (403), último admin (409), invalidación de sesión (401),
+  `SUPER_ADMIN` con/sin `X-Group-Id`, `/groups/me` y rutas de plataforma.
+- Documentación actualizada: `README.md`, `docs/architecture.md`,
+  `docs/glossary.md`, `docs/api-reference.md`, `CLAUDE.md`.
+
+### Pendiente
+
+- **Fase D**: import xlsx sin columna de grupo e invitaciones (opcional).
+- **Fases E–F**: Activities/Completions, Payments/Progression/Dashboard scoped.
+- **Fase G (Phase 8)**: frontend Firestore → API, `roleGuard`, registro sin selector
+  de grupo, puente de contraseñas desde Firebase Auth.
+- **Fase H**: suite cross-tenant automatizada, rate limit y cierre de `firestore.rules`.
+- Antes del próximo deploy: resetear/migrar la DB dev.

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength, IsBoolean } from 'class-validator';
 
 export class UpdateGroupDto {
   @IsOptional()
@@ -15,4 +15,9 @@ export class UpdateGroupDto {
   @IsString()
   @MinLength(2)
   city?: string;
+
+  /** Solo lo puede cambiar el SUPER_ADMIN de plataforma. */
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

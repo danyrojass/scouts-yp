@@ -7,9 +7,10 @@ declare global {
         sub: string;
         email: string;
         role: Role;
-        organizationId: string;
+        groupId: string | null;
+        tokenVersion: number;
       };
-      organizationId?: string;
+      groupId?: string;
     }
   }
 }

@@ -13,11 +13,10 @@ export class SetsService {
     this.prisma = PrismaService.getInstance();
   }
 
-  async findAll(organizationId: string, query: QuerySetsDto): Promise<PaginatedResult<any>> {
-    const where: Prisma.SetWhereInput = { organizationId };
+  async findAll(groupId: string, query: QuerySetsDto): Promise<PaginatedResult<any>> {
+    const where: Prisma.SetWhereInput = { groupId };
 
     if (query.type) where.type = query.type;
-    if (query.groupId) where.groupId = query.groupId;
     if (query.search) {
       where.name = { contains: query.search, mode: 'insensitive' };
     }
@@ -39,9 +38,9 @@ export class SetsService {
     return { data, total, limit: query.limit!, offset: query.offset! };
   }
 
-  async findById(organizationId: string, id: string) {
+  async findById(groupId: string, id: string) {
     const set = await this.prisma.set.findFirst({
-      where: { id, organizationId },
+      where: { id, groupId },
       include: {
         group: { select: { id: true, name: true, number: true, city: true } },
         _count: { select: { users: true } },
@@ -55,45 +54,34 @@ export class SetsService {
     return set;
   }
 
-  async create(organizationId: string, dto: CreateSetDto) {
-    await this.assertGroupInOrganization(organizationId, dto.groupId);
-
-    const set = await this.prisma.set.create({
+  async create(groupId: string, dto: CreateSetDto) {
+    return this.prisma.set.create({
       data: {
         name: dto.name,
         type: dto.type,
-        groupId: dto.groupId,
-        organizationId,
+        groupId,
       },
     });
-
-    return set;
   }
 
-  async update(organizationId: string, id: string, dto: UpdateSetDto) {
+  async update(groupId: string, id: string, dto: UpdateSetDto) {
     const existing = await this.prisma.set.findFirst({
-      where: { id, organizationId },
+      where: { id, groupId },
     });
 
     if (!existing) {
       throw new NotFoundException('Set not found');
     }
 
-    if (dto.groupId) {
-      await this.assertGroupInOrganization(organizationId, dto.groupId);
-    }
-
-    const set = await this.prisma.set.update({
+    return this.prisma.set.update({
       where: { id },
       data: dto,
     });
-
-    return set;
   }
 
-  async remove(organizationId: string, id: string) {
+  async remove(groupId: string, id: string) {
     const existing = await this.prisma.set.findFirst({
-      where: { id, organizationId },
+      where: { id, groupId },
     });
 
     if (!existing) {
@@ -101,17 +89,5 @@ export class SetsService {
     }
 
     await this.prisma.set.delete({ where: { id } });
-  }
-
-  /** Un set solo puede pertenecer a un grupo de la misma organización. */
-  private async assertGroupInOrganization(organizationId: string, groupId: string) {
-    const group = await this.prisma.group.findFirst({
-      where: { id: groupId, organizationId },
-      select: { id: true },
-    });
-
-    if (!group) {
-      throw new NotFoundException('Group not found');
-    }
   }
 }

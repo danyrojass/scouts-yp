@@ -1,12 +1,30 @@
 import bcrypt from 'bcrypt';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { QueryUsersDto } from './dto/query-users.dto.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
+import { ForbiddenException } from '../../common/exceptions/forbidden.exception.js';
 import { HttpException } from '../../common/exceptions/http.exception.js';
 import { PaginatedResult } from '../../common/dto/pagination.dto.js';
+import { Actor } from '../../common/types/actor.js';
+import { hasAtLeast } from '../../common/middleware/roles.guard.js';
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  dateOfBirth: true,
+  type: true,
+  role: true,
+  level: true,
+  isActive: true,
+  groupId: true,
+  setId: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
 
 export class UsersService {
   private prisma: PrismaClient;
@@ -15,14 +33,11 @@ export class UsersService {
     this.prisma = PrismaService.getInstance();
   }
 
-  async findAll(organizationId: string, query: QueryUsersDto): Promise<PaginatedResult<any>> {
-    const where: Prisma.UserWhereInput = {
-      organizationId,
-    };
+  async findAll(groupId: string, query: QueryUsersDto): Promise<PaginatedResult<any>> {
+    const where: Prisma.UserWhereInput = { groupId };
 
     if (query.type) where.type = query.type;
     if (query.level) where.level = query.level;
-    if (query.groupId) where.groupId = query.groupId;
     if (query.setId) where.setId = query.setId;
     if (query.search) {
       where.OR = [
@@ -37,21 +52,7 @@ export class UsersService {
         skip: query.offset,
         take: query.limit,
         orderBy: { [query.sortBy!]: query.sortOrder },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          dateOfBirth: true,
-          type: true,
-          role: true,
-          level: true,
-          isActive: true,
-          organizationId: true,
-          groupId: true,
-          setId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: USER_SELECT,
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -59,24 +60,10 @@ export class UsersService {
     return { data, total, limit: query.limit!, offset: query.offset! };
   }
 
-  async findById(organizationId: string, id: string) {
+  async findById(groupId: string, id: string) {
     const user = await this.prisma.user.findFirst({
-      where: { id, organizationId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        dateOfBirth: true,
-        type: true,
-        role: true,
-        level: true,
-        isActive: true,
-        organizationId: true,
-        groupId: true,
-        setId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      where: { id, groupId },
+      select: USER_SELECT,
     });
 
     if (!user) {
@@ -86,15 +73,21 @@ export class UsersService {
     return user;
   }
 
-  async create(organizationId: string, dto: CreateUserDto) {
+  async create(groupId: string, actor: Actor, dto: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) {
       throw new HttpException(409, 'Email already registered');
     }
 
+    this.assertCanAssignRole(actor, dto.role);
+
+    if (dto.setId) {
+      await this.assertSetInGroup(groupId, dto.setId);
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
@@ -102,74 +95,113 @@ export class UsersService {
         type: dto.type ?? 'BENEFICIARIO',
         role: dto.role ?? 'BENEFICIARIO',
         level: dto.level ?? 'LOBATO',
-        organizationId,
-        groupId: dto.groupId,
-        setId: dto.setId,
+        groupId,
+        setId: dto.setId ?? null,
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        dateOfBirth: true,
-        type: true,
-        role: true,
-        level: true,
-        isActive: true,
-        organizationId: true,
-        groupId: true,
-        setId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: USER_SELECT,
     });
-
-    return user;
   }
 
-  async update(organizationId: string, id: string, dto: UpdateUserDto) {
+  async update(groupId: string, actor: Actor, id: string, dto: UpdateUserDto) {
     const existing = await this.prisma.user.findFirst({
-      where: { id, organizationId },
+      where: { id, groupId },
     });
 
     if (!existing) {
       throw new NotFoundException('User not found');
     }
 
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: dto,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        dateOfBirth: true,
-        type: true,
-        role: true,
-        level: true,
-        isActive: true,
-        organizationId: true,
-        groupId: true,
-        setId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    if (dto.role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('Cannot assign the platform administrator role');
+    }
 
-    return user;
+    if (!hasAtLeast(actor.role, Role.ADMIN)) {
+      if (existing.role === Role.ADMIN || dto.role === Role.ADMIN) {
+        throw new ForbiddenException('Only an administrator can manage administrators');
+      }
+    }
+
+    if (dto.setId) {
+      await this.assertSetInGroup(groupId, dto.setId);
+    }
+
+    const adminIsLosingRole = existing.role === Role.ADMIN && dto.role !== undefined && dto.role !== Role.ADMIN;
+    const adminIsDeactivated = existing.role === Role.ADMIN && dto.isActive === false;
+
+    if (adminIsLosingRole || adminIsDeactivated) {
+      await this.assertNotLastAdmin(groupId, id);
+    }
+
+    const data: Prisma.UserUpdateInput = { ...dto };
+
+    if (dto.role !== undefined || dto.isActive !== undefined) {
+      data.tokenVersion = { increment: 1 };
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      select: USER_SELECT,
+    });
   }
 
-  async remove(organizationId: string, id: string) {
+  async remove(groupId: string, id: string) {
     const existing = await this.prisma.user.findFirst({
-      where: { id, organizationId },
+      where: { id, groupId },
     });
 
     if (!existing) {
       throw new NotFoundException('User not found');
+    }
+
+    if (existing.role === Role.ADMIN) {
+      await this.assertNotLastAdmin(groupId, id);
     }
 
     await this.prisma.user.update({
       where: { id },
-      data: { isActive: false },
+      data: {
+        isActive: false,
+        tokenVersion: { increment: 1 },
+      },
     });
+  }
+
+  private assertCanAssignRole(actor: Actor, role?: Role): void {
+    if (!role) return;
+
+    if (role === Role.SUPER_ADMIN) {
+      throw new ForbiddenException('Cannot assign the platform administrator role');
+    }
+
+    if (role === Role.ADMIN && !hasAtLeast(actor.role, Role.ADMIN)) {
+      throw new ForbiddenException('Only an administrator can create administrators');
+    }
+  }
+
+  private async assertSetInGroup(groupId: string, setId: string): Promise<void> {
+    const set = await this.prisma.set.findFirst({
+      where: { id: setId, groupId },
+      select: { id: true },
+    });
+
+    if (!set) {
+      throw new NotFoundException('Set not found');
+    }
+  }
+
+  private async assertNotLastAdmin(groupId: string, excludeUserId: string): Promise<void> {
+    const remainingAdmins = await this.prisma.user.count({
+      where: {
+        groupId,
+        role: Role.ADMIN,
+        isActive: true,
+        id: { not: excludeUserId },
+      },
+    });
+
+    if (remainingAdmins === 0) {
+      throw new HttpException(409, 'The group must keep at least one active administrator');
+    }
   }
 }

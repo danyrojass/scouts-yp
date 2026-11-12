@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateGroupDto } from './dto/create-group.dto.js';
@@ -6,6 +7,17 @@ import { QueryGroupsDto } from './dto/query-groups.dto.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
 import { PaginatedResult } from '../../common/dto/pagination.dto.js';
 
+const GROUP_SELECT = {
+  id: true,
+  name: true,
+  number: true,
+  city: true,
+  slug: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.GroupSelect;
+
 export class GroupsService {
   private prisma: PrismaClient;
 
@@ -13,8 +25,44 @@ export class GroupsService {
     this.prisma = PrismaService.getInstance();
   }
 
-  async findAll(organizationId: string, query: QueryGroupsDto): Promise<PaginatedResult<any>> {
-    const where: Prisma.GroupWhereInput = { organizationId };
+  /** Grupo del usuario autenticado. */
+  async findMe(groupId: string) {
+    const group = await this.prisma.group.findFirst({
+      where: { id: groupId },
+      select: {
+        ...GROUP_SELECT,
+        _count: { select: { users: true, sets: true, activities: true } },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    return group;
+  }
+
+  async updateMe(groupId: string, dto: UpdateGroupDto) {
+    const existing = await this.prisma.group.findFirst({ where: { id: groupId } });
+
+    if (!existing) {
+      throw new NotFoundException('Group not found');
+    }
+
+    return this.prisma.group.update({
+      where: { id: groupId },
+      data: {
+        name: dto.name,
+        number: dto.number,
+        city: dto.city,
+      },
+      select: GROUP_SELECT,
+    });
+  }
+
+  /** Listado global: solo plataforma (SUPER_ADMIN). */
+  async findAll(query: QueryGroupsDto): Promise<PaginatedResult<any>> {
+    const where: Prisma.GroupWhereInput = {};
 
     if (query.search) {
       where.OR = [
@@ -30,7 +78,10 @@ export class GroupsService {
         skip: query.offset,
         take: query.limit,
         orderBy: { [query.sortBy!]: query.sortOrder },
-        include: { _count: { select: { users: true, sets: true } } },
+        select: {
+          ...GROUP_SELECT,
+          _count: { select: { users: true, sets: true } },
+        },
       }),
       this.prisma.group.count({ where }),
     ]);
@@ -38,12 +89,12 @@ export class GroupsService {
     return { data, total, limit: query.limit!, offset: query.offset! };
   }
 
-  async findById(organizationId: string, id: string) {
-    const group = await this.prisma.group.findFirst({
-      where: { id, organizationId },
-      include: {
-        _count: { select: { users: true, sets: true } },
-        sets: { select: { id: true, name: true, type: true } },
+  async findById(id: string) {
+    const group = await this.prisma.group.findUnique({
+      where: { id },
+      select: {
+        ...GROUP_SELECT,
+        _count: { select: { users: true, sets: true, activities: true } },
       },
     });
 
@@ -54,45 +105,52 @@ export class GroupsService {
     return group;
   }
 
-  async create(organizationId: string, dto: CreateGroupDto) {
-    const group = await this.prisma.group.create({
+  async create(dto: CreateGroupDto) {
+    return this.prisma.group.create({
       data: {
         name: dto.name,
         number: dto.number,
         city: dto.city,
-        organizationId,
+        slug: this.buildSlug(dto.name),
       },
+      select: GROUP_SELECT,
     });
-
-    return group;
   }
 
-  async update(organizationId: string, id: string, dto: UpdateGroupDto) {
-    const existing = await this.prisma.group.findFirst({
-      where: { id, organizationId },
-    });
+  async update(id: string, dto: UpdateGroupDto) {
+    const existing = await this.prisma.group.findUnique({ where: { id } });
 
     if (!existing) {
       throw new NotFoundException('Group not found');
     }
 
-    const group = await this.prisma.group.update({
+    return this.prisma.group.update({
       where: { id },
       data: dto,
+      select: GROUP_SELECT,
     });
-
-    return group;
   }
 
-  async remove(organizationId: string, id: string) {
-    const existing = await this.prisma.group.findFirst({
-      where: { id, organizationId },
-    });
+  /** Baja lógica: los grupos no se borran físicamente. */
+  async remove(id: string) {
+    const existing = await this.prisma.group.findUnique({ where: { id } });
 
     if (!existing) {
       throw new NotFoundException('Group not found');
     }
 
-    await this.prisma.group.delete({ where: { id } });
+    await this.prisma.group.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  private buildSlug(name: string): string {
+    const base = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    return `${base || 'grupo'}-${crypto.randomBytes(4).toString('hex')}`;
   }
 }

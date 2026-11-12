@@ -27,9 +27,5 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  groupId?: string;
-
-  @IsOptional()
-  @IsString()
   setId?: string;
 }

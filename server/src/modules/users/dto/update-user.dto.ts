@@ -21,10 +21,6 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  groupId?: string | null;
-
-  @IsOptional()
-  @IsString()
   setId?: string | null;
 
   @IsOptional()

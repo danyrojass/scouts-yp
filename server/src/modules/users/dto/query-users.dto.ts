@@ -13,10 +13,6 @@ export class QueryUsersDto extends PaginationDto {
 
   @IsOptional()
   @IsString()
-  groupId?: string;
-
-  @IsOptional()
-  @IsString()
   setId?: string;
 
   @IsOptional()

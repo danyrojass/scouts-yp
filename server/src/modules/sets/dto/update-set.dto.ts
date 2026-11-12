@@ -10,9 +10,4 @@ export class UpdateSetDto {
   @IsOptional()
   @IsEnum(SetType)
   type?: SetType;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  groupId?: string;
 }

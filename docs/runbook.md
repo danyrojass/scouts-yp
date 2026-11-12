@@ -14,7 +14,7 @@ Operación y troubleshooting del stack.
 make up            # docker compose up -d
 make logs          # seguir logs (Ctrl+C para salir)
 make migrate       # prisma migrate deploy (dentro del contenedor api)
-make seed          # admin@scouts.dev / admin123
+make seed          # admin@scouts.dev / admin123 + superadmin@scouts.dev / superadmin123
 ```
 
 La app queda en `http://localhost` (nginx). API directa: `http://localhost/api/v1/health`.
@@ -45,6 +45,24 @@ make fullstack-run   # docker run -p 8080:80 --env-file .env  → http://localho
 | `make backup` | `pg_dump` a `backups/scouts_yp_<timestamp>.sql` |
 | `cd server && npm run db:studio` | Prisma Studio |
 | `cd server && npm run db:migrate:prod` | aplicar migraciones |
+
+### Esquema multi-grupo en DBs existentes
+
+La migración `20261112000000_init` se **regeneró** cuando el backend pasó a
+multi-grupo (`Group` como tenant, `SUPER_ADMIN`, `User.tokenVersion`). Una base con el
+esquema viejo (`organizations` / `groups` anidado) **no** se puede actualizar en
+caliente con `migrate deploy`: hay que resetearla.
+
+```bash
+# SOLO en dev/local: borra todos los datos
+cd server
+npx prisma migrate reset      # aplica migraciones + seed
+```
+
+En producción no se resetea: se prepara una migración incremental explícita antes del
+deploy. Si `prisma migrate status` marca drift o una migración falló a mitad de camino
+(por ejemplo por un BOM UTF-8 en el `.sql`), usar `prisma migrate resolve` y volver a
+aplicar sobre una copia limpia.
 
 ## Troubleshooting
 

@@ -4,12 +4,14 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
-  const org = await prisma.organization.upsert({
-    where: { slug: 'scout-group-dev' },
+  const group = await prisma.group.upsert({
+    where: { slug: 'grupo-scout-dev' },
     update: {},
     create: {
-      name: 'Scout Group Dev',
-      slug: 'scout-group-dev',
+      name: 'Grupo Scout Dev',
+      number: '001',
+      city: 'La Plata',
+      slug: 'grupo-scout-dev',
     },
   });
 
@@ -25,7 +27,23 @@ async function main(): Promise<void> {
       type: 'DIRIGENTE',
       role: 'ADMIN',
       level: 'JEFE',
-      organizationId: org.id,
+      groupId: group.id,
+    },
+  });
+
+  const superAdminPassword = await bcrypt.hash('superadmin123', 12);
+
+  await prisma.user.upsert({
+    where: { email: 'superadmin@scouts.dev' },
+    update: {},
+    create: {
+      email: 'superadmin@scouts.dev',
+      passwordHash: superAdminPassword,
+      name: 'Super Admin',
+      type: 'DIRIGENTE',
+      role: 'SUPER_ADMIN',
+      level: 'JEFE',
+      groupId: null,
     },
   });
 

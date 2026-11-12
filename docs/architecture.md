@@ -3,8 +3,8 @@
 ## Visión general
 
 Aplicación web de gestión scout (beneficiarios, grupos, secciones, actividades) con
-arquitectura **multi-tenant**: cada organización es dueña de sus datos y todo query
-está scoped por `organizationId` extraído del JWT.
+arquitectura **multi-tenant**: cada Grupo Scout es dueño de sus datos y todo query
+está scoped por `groupId` extraído del JWT.
 
 El proyecto está en un refactor que **migra de Firebase** (auth + Firestore) a una
 **API propia** (Express + PostgreSQL). El backend ya está migrado; el frontend aún
@@ -84,12 +84,17 @@ Un solo contenedor: nginx sirve el frontend y proxya `/api/` a `127.0.0.1:3000`
 
 - JWT: `access_token` (15 min) + `refresh_token` (7 días) en cookies httpOnly, `SameSite=Lax`, `Secure` en producción.
 - Rotación de refresh tokens: cada refresh revoca el anterior y emite uno nuevo (tabla `refresh_tokens`).
-- El middleware `authenticate` acepta cookie `access_token` **o** header `Authorization: Bearer <token>`.
-- `requireTenant` inyecta `req.organizationId`; `requireRole(...roles)` valida el rol del JWT.
+- El middleware `authenticate` acepta cookie `access_token` **o** header `Authorization: Bearer <token>`;
+  además valida `isActive` y `tokenVersion` contra la base (invalida sesiones al cambiar rol, grupo o estado).
+- `requireGroup` inyecta `req.groupId`. Para roles de grupo sale siempre del JWT; el `SUPER_ADMIN`
+  debe enviar `X-Group-Id`, que se valida contra la base y se audita.
+- `requireRole(...roles)` exige un rol exacto; `requireAtLeast(role)` usa la jerarquía
+  `BENEFICIARIO < DIRIGENTE < ADMIN < SUPER_ADMIN`.
 
 ## Decisiones clave (ADR)
 
-1. **Multi-tenant por `organizationId`** en cada entidad; registro crea organización propia.
+1. **Multi-tenant por `groupId`** en cada entidad; el registro público crea un Grupo + usuario `ADMIN`.
+   Un usuario pertenece a un solo grupo; `SUPER_ADMIN` es el único rol sin grupo.
 2. **Cookies httpOnly en lugar de localStorage** para mitigar XSS.
 3. **Contenedor full-stack para Railway** (single domain) para no romper cookies httpOnly entre servicios.
 4. **Soft delete de usuarios** (`isActive=false`) en vez de borrado físico; grupos sí se borran físicamente.
@@ -97,9 +102,10 @@ Un solo contenedor: nginx sirve el frontend y proxya `/api/` a `127.0.0.1:3000`
 
 ## Modelo de datos
 
-Prisma (`server/prisma/schema.prisma`): `Organization`, `User`, `Group`, `Set`,
-`Activity`, `ActivityCompletion`, `Payment`, `RefreshToken`, `Progression`.
+Prisma (`server/prisma/schema.prisma`): `Group`, `User`, `Set`, `Activity`,
+`ActivityCompletion`, `Payment`, `RefreshToken`, `Progression`.
 
-Relaciones principales: `Organization` 1—N usuarios/grupos/sets/actividades/pagos;
-`Group` 1—N `Set` y `User`; `User` N—M `Activity` vía `ActivityCompletion`;
-`User` 1—N `Payment`, `RefreshToken`, `Progression`.
+`Group` es el tenant: 1—N usuarios, sets, actividades, completions, pagos y
+progresiones. `User` N—M `Activity` vía `ActivityCompletion`. `User` 1—N
+`Payment`, `RefreshToken`, `Progression`. Solo `SUPER_ADMIN` puede tener `groupId`
+nulo (constraint `users_group_required`).

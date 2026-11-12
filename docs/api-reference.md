@@ -10,7 +10,7 @@ header `Authorization: Bearer <token>`.
 | Enum | Valores |
 |------|---------|
 | `UserType` | `BENEFICIARIO`, `DIRIGENTE` |
-| `Role` | `BENEFICIARIO`, `DIRIGENTE`, `ADMIN` |
+| `Role` | `BENEFICIARIO`, `DIRIGENTE`, `ADMIN`, `SUPER_ADMIN` |
 | `UserLevel` | `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE` |
 | `SetType` | `SEISENA`, `PATRULLA`, `EQUIPO`, `CLAN` |
 
@@ -29,10 +29,11 @@ Error: `{ "success": false, "error": { "message": "...", "details?" } }`
 ## Auth
 
 ### `POST /auth/register`
-Body: `{ email, password, name, organizationName?, type?, level? }`
-Crea organización propia (slug autogenerado) y usuario `ADMIN`.
+Body: `{ email, password, name, groupName, groupNumber, groupCity, type?, level? }`
+Crea un Grupo nuevo (slug autogenerado) y el usuario `ADMIN` de ese grupo, en una
+transacción. Es el único alta pública: los demás miembros los crea un dirigente.
 ```
-201 { "success": true, "data": { "user": {...} } }  + Set-Cookie
+201 { "success": true, "data": { "user": {...}, "group": {...} } }  + Set-Cookie
 409 { success:false, error.message: "Email already registered" }
 ```
 
@@ -59,71 +60,92 @@ Requiere cookie `refresh_token`. Revoca el token y limpia cookies.
 ### `GET /auth/me`
 Requiere `authenticate`.
 ```
-200 { "success": true, "data": { "user": {...} } }
+200 { "success": true, "data": { "user": { ..., "group": {...} } } }
 404 "User not found"
 ```
 
 ## Users
 
-Todas requieren `authenticate` + `requireTenant` (scoped a la organización del JWT).
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
-| GET | `/users` | cualquier autenticado | listado paginado/filtrado |
-| GET | `/users/:id` | cualquier autenticado | detalle |
-| POST | `/users` | `DIRIGENTE`, `ADMIN` | crear |
-| PATCH | `/users/:id` | `DIRIGENTE`, `ADMIN` | editar |
-| DELETE | `/users/:id` | `ADMIN` | soft delete (`isActive=false`) |
+| GET | `/users` | cualquier autenticado | listado paginado/filtrado del grupo |
+| GET | `/users/:id` | cualquier autenticado | detalle (404 si es de otro grupo) |
+| POST | `/users` | `DIRIGENTE`+ | crear |
+| PATCH | `/users/:id` | `DIRIGENTE`+ | editar |
+| DELETE | `/users/:id` | `ADMIN`+ | soft delete (`isActive=false`) |
+
+Reglas:
+- `groupId` sale siempre del contexto, nunca del body.
+- Un `DIRIGENTE` no puede crear ni editar usuarios `ADMIN`.
+- Nadie puede asignar `SUPER_ADMIN`.
+- `setId` debe pertenecer al mismo grupo.
+- No se puede degradar/desactivar al último `ADMIN` activo (409).
+- Cambiar `role` o `isActive` incrementa `tokenVersion` e invalida las sesiones del usuario.
 
 ### Query params `GET /users`
-`type?`, `level?`, `groupId?`, `setId?`, `search?` (name/email, case-insensitive),
+`type?`, `level?`, `setId?`, `search?` (name/email, case-insensitive),
 `limit` (1–100, default 20), `offset` (≥0, default 0), `sortBy` (default `createdAt`),
 `sortOrder` (`asc`|`desc`, default `desc`).
 
 ### Body `POST /users`
-`{ email, password (min 6), name (min 2), type?, role?, level?, groupId?, setId? }`
+`{ email, password (min 6), name (min 2), type?, role?, level?, setId? }`
 
 ### Body `PATCH /users/:id`
-Todos opcionales: `name?`, `type?`, `role?`, `level?`, `groupId?`, `setId?`, `isActive?`
+Todos opcionales: `name?`, `type?`, `role?`, `level?`, `setId?`, `isActive?`
 
 ## Groups
 
-Todas requieren `authenticate` + `requireTenant`.
+### Grupo propio (tenant)
 
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
-| GET | `/groups` | cualquier autenticado | listado paginado |
-| GET | `/groups/:id` | cualquier autenticado | detalle con `_count` de users/sets |
-| POST | `/groups` | `DIRIGENTE`, `ADMIN` | crear |
-| PATCH | `/groups/:id` | `DIRIGENTE`, `ADMIN` | editar |
-| DELETE | `/groups/:id` | `ADMIN` | borrado físico |
+| GET | `/groups/me` | `ADMIN`+ | grupo del JWT con `_count` de users/sets/activities |
+| PATCH | `/groups/me` | `ADMIN`+ | editar `name`, `number`, `city` del propio grupo |
+
+### Plataforma (`SUPER_ADMIN`)
+
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| GET | `/groups` | `SUPER_ADMIN` | listado global paginado |
+| GET | `/groups/:id` | `SUPER_ADMIN` | detalle de cualquier grupo |
+| POST | `/groups` | `SUPER_ADMIN` | crear grupo (slug autogenerado) |
+| PATCH | `/groups/:id` | `SUPER_ADMIN` | editar, incluido `isActive` |
+| DELETE | `/groups/:id` | `SUPER_ADMIN` | baja lógica (`isActive=false`) |
 
 ### Query params `GET /groups`
 `search?` (name/number/city), `limit`, `offset`, `sortBy`, `sortOrder`.
 
 ### Body `POST /groups` / `PATCH /groups/:id`
-`{ name (min 2), number (String, min 1), city (min 2) }` — todos opcionales en PATCH.
+`{ name (min 2), number (String, min 1), city (min 2), isActive? }` — todos opcionales en PATCH.
+`isActive` solo lo aplica el `SUPER_ADMIN` por la ruta de plataforma.
+
+### Acceso de plataforma a rutas de grupo
+El `SUPER_ADMIN` debe enviar el header `X-Group-Id: <groupId>` en `/users`, `/sets` y
+`/groups/me`. Sin el header responde `403`; si el grupo no existe o está inactivo, `404`.
+Cada acceso queda auditado en el log.
 
 ## Sets
 
-Todas requieren `authenticate` + `requireTenant`.
+Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 
 | Método | Ruta | Roles | Descripción |
 |--------|------|-------|-------------|
-| GET | `/sets` | cualquier autenticado | listado paginado/filtrado |
-| GET | `/sets/:id` | cualquier autenticado | detalle con grupo y `_count` de users |
-| POST | `/sets` | `DIRIGENTE`, `ADMIN` | crear |
-| PATCH | `/sets/:id` | `DIRIGENTE`, `ADMIN` | editar |
-| DELETE | `/sets/:id` | `ADMIN` | borrado físico |
+| GET | `/sets` | cualquier autenticado | listado paginado/filtrado del grupo |
+| GET | `/sets/:id` | cualquier autenticado | detalle con `_count` de users (404 si es de otro grupo) |
+| POST | `/sets` | `DIRIGENTE`+ | crear |
+| PATCH | `/sets/:id` | `DIRIGENTE`+ | editar |
+| DELETE | `/sets/:id` | `ADMIN`+ | borrado físico |
 
 ### Query params `GET /sets`
-`type?` (`SEISENA`|`PATRULLA`|`EQUIPO`|`CLAN`), `groupId?`, `search?` (name,
-case-insensitive), `limit`, `offset`, `sortBy`, `sortOrder`.
+`type?` (`SEISENA`|`PATRULLA`|`EQUIPO`|`CLAN`), `search?` (name, case-insensitive),
+`limit`, `offset`, `sortBy`, `sortOrder`.
 
 ### Body `POST /sets` / `PATCH /sets/:id`
-`{ name (min 2), type (SetType), groupId }` — en PATCH todos opcionales.
+`{ name (min 2), type (SetType) }` — en PATCH todos opcionales.
 
-El `groupId` debe pertenecer a la misma organización; si no, responde `404 "Group not found"`.
+El `groupId` sale del contexto de autenticación; no se acepta en el body.
 
 ## Códigos de error comunes
 
@@ -131,9 +153,9 @@ El `groupId` debe pertenecer a la misma organización; si no, responde `404 "Gro
 |--------|------|
 | 400 | validación de body o query fallida (incluye `details`) |
 | 401 | token faltante, inválido o expirado |
-| 403 | rol insuficiente (`ForbiddenException`) |
-| 404 | recurso no encontrado (scoped a tenant) |
-| 409 | email duplicado |
+| 403 | rol insuficiente, usuario sin grupo o `SUPER_ADMIN` sin `X-Group-Id` |
+| 404 | recurso no encontrado (scoped a grupo, no se filtra existencia cross-tenant) |
+| 409 | email duplicado o intento de dejar al grupo sin administradores |
 | 500 | error no manejado |
 
 ## Notas de producción

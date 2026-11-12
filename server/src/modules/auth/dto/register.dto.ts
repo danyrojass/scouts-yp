@@ -13,10 +13,17 @@ export class RegisterDto {
   @MinLength(2)
   name!: string;
 
-  @IsOptional()
   @IsString()
   @MinLength(2)
-  organizationName?: string;
+  groupName!: string;
+
+  @IsString()
+  @MinLength(1)
+  groupNumber!: string;
+
+  @IsString()
+  @MinLength(2)
+  groupCity!: string;
 
   @IsOptional()
   @IsEnum(UserType)

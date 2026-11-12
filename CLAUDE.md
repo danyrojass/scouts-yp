@@ -11,7 +11,7 @@ Aplicación web de gestión scout: beneficiarios, grupos, secciones y actividade
 
 ## Estado del refactor
 
-El backend está migrado de Firebase a una API propia (multi-tenant, roles). El **frontend todavía consume Firebase** (Phase 8 pendiente). Detalle por fases en `SESSION_STATE.md`.
+El backend está migrado de Firebase a una API propia (multi-tenant por **Grupo**, roles). El **frontend todavía consume Firebase** (Phase 8 pendiente). Detalle por fases en `SESSION_STATE.md`.
 
 ## Comandos
 
@@ -39,11 +39,13 @@ Referencia completa en `docs/api-reference.md`.
 
 ## Reglas de negocio
 
-- **Roles** (jerárquicos): `BENEFICIARIO` < `DIRIGENTE` < `ADMIN`
-  - Listar/ver: cualquier usuario autenticado (scoped a su organización)
-  - Crear/editar: `DIRIGENTE` y `ADMIN`
-  - Eliminar (soft delete): solo `ADMIN`
-- **Multi-tenant**: toda entidad tiene `organizationId`; los queries SIEMPRE están scoped por el tenant del JWT (middleware `requireTenant`)
+- **Roles** (jerárquicos): `BENEFICIARIO` < `DIRIGENTE` < `ADMIN` < `SUPER_ADMIN`
+  - Listar/ver: cualquier usuario autenticado (scoped a su grupo)
+  - Crear/editar: `DIRIGENTE` y `ADMIN` (un `DIRIGENTE` no gestiona `ADMIN`)
+  - Eliminar (soft delete) y configuración del grupo: solo `ADMIN`
+  - `SUPER_ADMIN`: plataforma, sin grupo propio; opera con header `X-Group-Id` (validado y auditado)
+- **Multi-tenant**: toda entidad tiene `groupId`; los queries SIEMPRE están scoped por el grupo del JWT (middleware `requireGroup`). El `groupId` nunca sale del body/query.
+- **Registro público**: solo crea Grupo + usuario `ADMIN`. El resto de miembros los da de alta un dirigente.
 - **Niveles**: `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE`
 - **SetType**: `SEISENA`, `PATRULLA`, `EQUIPO`, `CLAN`
 - Grupos: `number` es String (ej. "001")

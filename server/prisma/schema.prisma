@@ -17,6 +17,7 @@ enum Role {
   BENEFICIARIO
   DIRIGENTE
   ADMIN
+  SUPER_ADMIN
 }
 
 enum UserLevel {
@@ -34,20 +35,25 @@ enum SetType {
   CLAN
 }
 
-model Organization {
+/// Un Grupo Scout es el tenant de la aplicación: dueño de todos sus datos.
+model Group {
   id        String   @id @default(cuid())
   name      String
+  number    String
+  city      String
   slug      String   @unique
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users      User[]
-  groups     Group[]
-  sets       Set[]
-  activities Activity[]
-  payments   Payment[]
+  users        User[]
+  sets         Set[]
+  activities   Activity[]
+  completions  ActivityCompletion[]
+  payments     Payment[]
+  progressions Progression[]
 
-  @@map("organizations")
+  @@map("groups")
 }
 
 model User {
@@ -60,13 +66,12 @@ model User {
   role           Role      @default(BENEFICIARIO)
   level          UserLevel @default(LOBATO)
   isActive       Boolean   @default(true)
-  organizationId String
   groupId        String?
   setId          String?
+  tokenVersion   Int       @default(0)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  organization   Organization           @relation(fields: [organizationId], references: [id])
   group          Group?                 @relation(fields: [groupId], references: [id])
   set            Set?                   @relation(fields: [setId], references: [id])
   completions    ActivityCompletion[]
@@ -75,91 +80,80 @@ model User {
   progressions   Progression[]          @relation("UserProgression")
   approvals      Progression[]          @relation("ProgressionApprover")
 
+  @@index([groupId])
   @@map("users")
 }
 
-model Group {
-  id             String   @id @default(cuid())
-  name           String
-  number         String
-  city           String
-  organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-  users        User[]
-  sets         Set[]
-
-  @@map("groups")
-}
-
 model Set {
-  id             String   @id @default(cuid())
-  name           String
-  type           SetType
-  groupId        String
-  organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  type      SetType
+  groupId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  group        Group                @relation(fields: [groupId], references: [id])
-  organization Organization         @relation(fields: [organizationId], references: [id])
+  group        Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
   users        User[]
   completions  ActivityCompletion[]
 
+  @@index([groupId])
   @@map("sets")
 }
 
 model Activity {
-  id             String    @id @default(cuid())
-  name           String
-  key            String
-  level          UserLevel
-  points         Int
-  description    String?
-  organizationId String
-  scheduledAt    DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  key         String
+  level       UserLevel
+  points      Int
+  description String?
+  groupId     String
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  organization Organization        @relation(fields: [organizationId], references: [id])
+  group        Group                @relation(fields: [groupId], references: [id])
   completions  ActivityCompletion[]
 
-  @@unique([key, organizationId])
+  @@unique([key, groupId])
+  @@index([groupId])
   @@map("activities")
 }
 
 model ActivityCompletion {
-  id          String   @id @default(cuid())
-  activityId  String
-  userId      String
-  setId       String?
-  completedAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  activityId   String
+  userId       String
+  setId        String?
+  groupId      String
+  completedAt  DateTime @default(now())
   earnedPoints Int
 
   activity Activity @relation(fields: [activityId], references: [id])
   user     User     @relation(fields: [userId], references: [id])
   set      Set?     @relation(fields: [setId], references: [id])
+  group    Group    @relation(fields: [groupId], references: [id])
 
   @@unique([activityId, userId])
+  @@index([groupId])
   @@map("activity_completions")
 }
 
 model Payment {
-  id             String          @id @default(cuid())
-  userId         String
-  organizationId String
-  amount         Decimal         @db.Decimal(10, 2)
-  currency       String          @default("ARS")
-  concept        String
-  paidAt         DateTime        @default(now())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  groupId     String
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("ARS")
+  concept     String
+  paidAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user         User         @relation(fields: [userId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
 
+  @@index([groupId])
   @@map("payments")
 }
 
@@ -179,7 +173,7 @@ model RefreshToken {
 model Progression {
   id             String    @id @default(cuid())
   userId         String
-  organizationId String
+  groupId        String
   fromLevel      UserLevel
   toLevel        UserLevel
   approvedById   String?
@@ -188,6 +182,8 @@ model Progression {
 
   user       User  @relation("UserProgression", fields: [userId], references: [id])
   approvedBy User? @relation("ProgressionApprover", fields: [approvedById], references: [id])
+  group      Group @relation(fields: [groupId], references: [id])
 
+  @@index([groupId])
   @@map("progressions")
 }
