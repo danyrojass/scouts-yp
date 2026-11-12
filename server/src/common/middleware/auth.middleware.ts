@@ -58,10 +58,17 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
 
     next();
   } catch (err) {
-    next(
-      err instanceof UnauthorizedException
-        ? err
-        : new UnauthorizedException('Invalid or expired access token'),
-    );
+    if (err instanceof UnauthorizedException) {
+      next(err);
+      return;
+    }
+
+    if (err instanceof jwt.JsonWebTokenError) {
+      next(new UnauthorizedException('Invalid or expired access token'));
+      return;
+    }
+
+    // Errores de infraestructura (p. ej. DB caída) no son 401.
+    next(err);
   }
 }

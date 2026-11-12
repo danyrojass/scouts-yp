@@ -133,15 +133,27 @@ export class UsersService {
     }
 
     const data: Prisma.UserUpdateInput = { ...dto };
+    const invalidateSessions = dto.role !== undefined || dto.isActive !== undefined;
 
-    if (dto.role !== undefined || dto.isActive !== undefined) {
+    if (invalidateSessions) {
       data.tokenVersion = { increment: 1 };
     }
 
-    return this.prisma.user.update({
-      where: { id },
-      data,
-      select: USER_SELECT,
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.update({
+        where: { id },
+        data,
+        select: USER_SELECT,
+      });
+
+      if (invalidateSessions) {
+        await tx.refreshToken.updateMany({
+          where: { userId: id, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      return user;
     });
   }
 
@@ -158,12 +170,19 @@ export class UsersService {
       await this.assertNotLastAdmin(groupId, id);
     }
 
-    await this.prisma.user.update({
-      where: { id },
-      data: {
-        isActive: false,
-        tokenVersion: { increment: 1 },
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: {
+          isActive: false,
+          tokenVersion: { increment: 1 },
+        },
+      });
+
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
     });
   }
 

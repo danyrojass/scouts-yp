@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -25,6 +25,10 @@ app.use(`${env.API_PREFIX}/auth`, authRouter);
 app.use(`${env.API_PREFIX}/users`, usersRouter);
 app.use(`${env.API_PREFIX}/groups`, groupsRouter);
 app.use(`${env.API_PREFIX}/sets`, setsRouter);
+
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ success: false, error: { message: 'Route not found' } });
+});
 
 app.use(errorHandler);
 

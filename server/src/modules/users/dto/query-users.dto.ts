@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsIn } from 'class-validator';
 import { UserType, UserLevel } from '@prisma/client';
 import { PaginationDto } from '../../../common/dto/pagination.dto.js';
 
@@ -18,4 +18,8 @@ export class QueryUsersDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'updatedAt', 'name', 'email', 'type', 'role', 'level', 'isActive'])
+  sortBy?: string;
 }

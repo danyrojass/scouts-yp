@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 import { SetType } from '@prisma/client';
 import { PaginationDto } from '../../../common/dto/pagination.dto.js';
 
@@ -10,4 +10,8 @@ export class QuerySetsDto extends PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'updatedAt', 'name', 'type'])
+  sortBy?: string;
 }
