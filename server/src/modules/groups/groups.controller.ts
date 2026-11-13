@@ -34,8 +34,8 @@ export class GroupsController {
 
   async create(req: Request, res: Response): Promise<void> {
     const dto = req.body as CreateGroupDto;
-    const group = await this.groupsService.create(dto);
-    res.status(201).json({ success: true, data: { group } });
+    const result = await this.groupsService.create(dto);
+    res.status(201).json({ success: true, data: result });
   }
 
   async update(req: Request, res: Response): Promise<void> {

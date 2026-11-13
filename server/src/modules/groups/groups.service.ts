@@ -1,10 +1,12 @@
 import crypto from 'crypto';
-import { PrismaClient, Prisma } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import { PrismaClient, Prisma, Role, UserType, UserLevel } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateGroupDto } from './dto/create-group.dto.js';
 import { UpdateGroupDto } from './dto/update-group.dto.js';
 import { QueryGroupsDto } from './dto/query-groups.dto.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
+import { HttpException } from '../../common/exceptions/http.exception.js';
 import { PaginatedResult } from '../../common/dto/pagination.dto.js';
 
 const GROUP_SELECT = {
@@ -17,6 +19,20 @@ const GROUP_SELECT = {
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.GroupSelect;
+
+const ADMIN_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  type: true,
+  role: true,
+  level: true,
+  isActive: true,
+  groupId: true,
+  setId: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
 
 export class GroupsService {
   private prisma: PrismaClient;
@@ -106,14 +122,42 @@ export class GroupsService {
   }
 
   async create(dto: CreateGroupDto) {
-    return this.prisma.group.create({
-      data: {
-        name: dto.name,
-        number: dto.number,
-        city: dto.city,
-        slug: this.buildSlug(dto.name),
-      },
-      select: GROUP_SELECT,
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.admin.email },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new HttpException(409, 'Email already registered');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.admin.password, 12);
+
+    return this.prisma.$transaction(async (tx) => {
+      const group = await tx.group.create({
+        data: {
+          name: dto.name,
+          number: dto.number,
+          city: dto.city,
+          slug: this.buildSlug(dto.name),
+        },
+        select: GROUP_SELECT,
+      });
+
+      const admin = await tx.user.create({
+        data: {
+          email: dto.admin.email,
+          passwordHash,
+          name: dto.admin.name,
+          type: UserType.DIRIGENTE,
+          role: Role.ADMIN,
+          level: UserLevel.JEFE,
+          groupId: group.id,
+        },
+        select: ADMIN_SELECT,
+      });
+
+      return { group, admin };
     });
   }
 
