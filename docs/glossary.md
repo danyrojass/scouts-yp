@@ -27,21 +27,25 @@ Términos del dominio scout y de la aplicación.
 |---------|-------------|
 | **Group** | Grupo scout y **tenant** de la aplicación. Tiene `number` (String, ej. "001"), `city`, `slug` único e `isActive`. Todo query se scopea por su `id` (`groupId`). Se da de baja lógicamente. |
 | **User** | Usuario (beneficiario o dirigente). Pertenece a un solo grupo (`groupId`), salvo `SUPER_ADMIN`. Soft delete vía `isActive=false`. |
-| **Set** | Sección/subgrupo dentro de un grupo (type `SEISENA` \| `PATRULLA` \| `EQUIPO` \| `CLAN`). |
+| **Set** | Sección/unidad chica dentro de un grupo. Guarda su `level` (`LOBATO` \| `SCOUT` \| `CAMINANTE` \| `ROVER`); los dirigentes (`JEFE`) no tienen sección. |
 | **Activity** | Actividad con `key` único por organización, nivel y puntos. |
 | **ActivityCompletion** | Registro de actividad completada por un usuario (unique activity+user). |
 | **Payment** | Pago/cuota de un beneficiario (monto Decimal, concepto, moneda). |
 | **Progression** | Progresión de un beneficiario entre niveles, con aprobación de un dirigente. |
 | **RefreshToken** | Token de refresco con rotación y revocación. |
 
-## Tipos de Set (SetType)
+## Unidades por nivel
 
-| Término | Descripción |
-|---------|-------------|
-| **SEISENA** | Subgrupo de lobatos. |
-| **PATRULLA** | Subgrupo de scouts. |
-| **EQUIPO** | Subgrupo de caminantes. |
-| **CLAN** | Subgrupo de rovers. |
+La sección guarda la rama (`Set.level`); el nombre visible de la unidad chica se deriva
+de una única constante. No existe un enum `SetType`.
+
+| Nivel (`UserLevel`) | Unidad |
+|---------------------|--------|
+| **LOBATO** | Seisena |
+| **SCOUT** | Patrulla |
+| **CAMINANTE** | Equipo |
+| **ROVER** | Clan |
+| **JEFE** | — (los dirigentes no tienen sección) |
 
 ## Auth y seguridad
 

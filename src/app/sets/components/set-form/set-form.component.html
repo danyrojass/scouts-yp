@@ -32,12 +32,15 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="type">Tipo de Sección</label>
-                <select class="form-control" formControlName="type" id="type">
-                    @for (type of setTypes; track type) {
-                        <option [value]="type">{{ type }}</option>
+                <label class="form-label" for="level">Nivel de la sección</label>
+                <select class="form-control" formControlName="level" id="level">
+                    @for (level of youthLevels; track level) {
+                        <option [value]="level">{{ level }} — {{ unitNameForLevel(level) }}</option>
                     }
                 </select>
+                <div class="form-hint">
+                    <span>El tipo de unidad se deriva del nivel (Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan).</span>
+                </div>
             </div>
 
             <div class="form-group">

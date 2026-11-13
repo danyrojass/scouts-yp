@@ -79,9 +79,9 @@
                                     <p>Aún no hay puntajes registrados</p>
                                 </div>
                             } @else {
-                                @for (group of groupedLeaderboard(); track group.type) {
+                                @for (group of groupedLeaderboard(); track group.level) {
                                     <div class="leaderboard-group">
-                                        <h3 class="section-title">{{ group.type }}</h3>
+                                        <h3 class="section-title">{{ group.unitName }}</h3>
                                         <table class="leaderboard-table">
                                             <thead>
                                                 <tr>
@@ -153,7 +153,7 @@
                                             <div class="value">{{ groupSets().length === 1 ? '1 sección' : groupSets().length + ' secciones' }}</div>
                                         } @else {
                                             <div class="label">Mi sección</div>
-                                            <div class="value">{{ userSet()?.name }} ({{ userSet()?.type }})</div>
+                                            <div class="value">{{ userSet()?.name }} ({{ unitNameForLevel(userSet()?.level) }})</div>
                                         }
                                     </div>
                                 }
@@ -189,8 +189,8 @@
                                             <tr class="level-row">
                                                 <td colspan="3">
                                                     <span class="level-label">{{ group.level }}</span>
-                                                    @if (group.setType) {
-                                                        <span class="badge badge-secondary">{{ group.setType }}</span>
+                                                    @if (group.unitName) {
+                                                        <span class="badge badge-secondary">{{ group.unitName }}</span>
                                                     }
                                                 </td>
                                             </tr>
@@ -254,9 +254,9 @@
                                     <p>Aún no hay secciones</p>
                                 </div>
                             } @else {
-                                @for (group of groupedSets(); track group.type) {
+                                @for (group of groupedSets(); track group.level) {
                                     <div class="section-group">
-                                        <h3 class="section-title">{{ group.type }}</h3>
+                                        <h3 class="section-title">{{ group.unitName }}</h3>
                                         @for (set of group.sets; track set.id) {
                                             <div class="list-item">
                                                 <div class="list-item-info">

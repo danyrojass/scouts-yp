@@ -10,9 +10,9 @@ import {ActivityService} from '../../activities/services/activity.service';
 
 import {User, UserLevel, UserType} from '../../users/models';
 import {Group} from '../../groups/models';
-import {Set, SetType} from '../../sets/models';
+import {Set} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
-import {groupByLevel} from '../../shared/utils/level-settype.util';
+import {groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
 import {DatePipe} from "@angular/common";
@@ -27,7 +27,8 @@ interface DashboardData {
 }
 
 interface GroupedSets {
-    type: SetType;
+    level: UserLevel;
+    unitName: string | null;
     sets: Set[];
 }
 
@@ -67,19 +68,19 @@ export class DashboardComponent implements OnInit {
     groupedSets = computed(() => {
         const sets = this.groupSets();
         const grouped: GroupedSets[] = [];
-        
-        for (const setType of Object.values(SetType)) {
-            const setsOfType = sets.filter(s => s.type === setType);
-            if (setsOfType.length > 0) {
-                grouped.push({ type: setType, sets: setsOfType });
+
+        for (const level of YOUTH_LEVELS) {
+            const setsOfLevel = sets.filter(s => s.level === level);
+            if (setsOfLevel.length > 0) {
+                grouped.push({ level, unitName: unitNameForLevel(level), sets: setsOfLevel });
             }
         }
-        
+
         return grouped;
     });
 
     /**
-     * Actividad reciente agrupada por nivel, mostrando el SetType correspondiente
+     * Actividad reciente agrupada por nivel, mostrando la unidad correspondiente
      * (Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan).
      */
     groupedCompletedActivities = computed(() => {
@@ -149,21 +150,25 @@ export class DashboardComponent implements OnInit {
     });
 
     /**
-     * Tabla de posiciones separada por tipo de sección (Seisena, Patrulla, Equipo,
-     * Clan) para poder comparar contra pares del mismo tipo.
+     * Tabla de posiciones separada por rama (Seisena, Patrulla, Equipo, Clan)
+     * para poder comparar contra pares del mismo tipo.
      */
     groupedLeaderboard = computed(() =>
-        Object.values(SetType)
-            .map(type => ({
-                type,
-                entries: this.leaderboard().filter(entry => entry.set.type === type),
-            }))
-            .filter(group => group.entries.length > 0)
+        this.groupSets().length === 0
+            ? []
+            : YOUTH_LEVELS
+                .map(level => ({
+                    level,
+                    unitName: unitNameForLevel(level),
+                    entries: this.leaderboard().filter(entry => entry.set.level === level),
+                }))
+                .filter(group => group.entries.length > 0)
     );
 
     isLoading = computed(() => this.currentUser() === null);
 
     protected readonly UserType = UserType;
+    protected readonly unitNameForLevel = unitNameForLevel;
 
     private authService = inject(AuthService);
     private groupService = inject(GroupService);
@@ -202,7 +207,7 @@ export class DashboardComponent implements OnInit {
                 if (user.setId) {
                     const userSet = filteredSets.find(s => s.id === user.setId);
                     if (userSet) {
-                        filteredSets = filteredSets.filter(s => s.type === userSet.type);
+                        filteredSets = filteredSets.filter(s => s.level === userSet.level);
                     }
                 }
                 filteredActivities = filteredActivities.filter(a => a.level === user.level);

@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { SetType } from '@prisma/client';
+import { UserLevel } from '@prisma/client';
 
 export class UpdateSetDto {
   @IsOptional()
@@ -8,6 +8,6 @@ export class UpdateSetDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(SetType)
-  type?: SetType;
+  @IsEnum(UserLevel)
+  level?: UserLevel;
 }

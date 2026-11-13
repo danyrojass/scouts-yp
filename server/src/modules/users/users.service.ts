@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { PrismaClient, Prisma, Role } from '@prisma/client';
+import { PrismaClient, Prisma, Role, UserLevel, UserType } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateUserDto } from './dto/create-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
@@ -81,9 +81,26 @@ export class UsersService {
 
     this.assertCanAssignRole(actor, dto.role);
 
-    if (dto.setId) {
-      await this.assertSetInGroup(groupId, dto.setId);
+    const type = dto.type ?? UserType.BENEFICIARIO;
+    const set = dto.setId ? await this.findSetInGroup(groupId, dto.setId) : null;
+
+    if (set && type === UserType.DIRIGENTE) {
+      throw new HttpException(400, 'Leaders cannot belong to a section');
     }
+
+    if (type === UserType.DIRIGENTE && dto.level !== undefined && dto.level !== UserLevel.JEFE) {
+      throw new HttpException(400, 'Leaders must have the leaders level');
+    }
+
+    if (set && dto.level && dto.level !== set.level) {
+      throw new HttpException(400, 'User level must match the section level');
+    }
+
+    const level = set
+      ? set.level
+      : type === UserType.DIRIGENTE
+        ? UserLevel.JEFE
+        : dto.level ?? UserLevel.LOBATO;
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
@@ -92,11 +109,11 @@ export class UsersService {
         email: dto.email,
         passwordHash,
         name: dto.name,
-        type: dto.type ?? 'BENEFICIARIO',
+        type,
         role: dto.role ?? 'BENEFICIARIO',
-        level: dto.level ?? 'LOBATO',
+        level,
         groupId,
-        setId: dto.setId ?? null,
+        setId: set?.id ?? null,
       },
       select: USER_SELECT,
     });
@@ -121,8 +138,31 @@ export class UsersService {
       }
     }
 
-    if (dto.setId) {
-      await this.assertSetInGroup(groupId, dto.setId);
+    const type = dto.type ?? existing.type;
+    const targetSetId = dto.setId !== undefined ? dto.setId : existing.setId;
+    let level = dto.level ?? existing.level;
+
+    // Un dirigente siempre está en el nivel de dirigencia.
+    if (type === UserType.DIRIGENTE) {
+      if (dto.level !== undefined && dto.level !== UserLevel.JEFE) {
+        throw new HttpException(400, 'Leaders must have the leaders level');
+      }
+      level = UserLevel.JEFE;
+    }
+
+    if (targetSetId) {
+      const set = await this.findSetInGroup(groupId, targetSetId);
+
+      if (type === UserType.DIRIGENTE) {
+        throw new HttpException(400, 'Leaders cannot belong to a section');
+      }
+
+      if (dto.level !== undefined && dto.level !== set.level) {
+        throw new HttpException(400, 'User level must match the section level');
+      }
+
+      // La sección es la fuente de verdad del nivel.
+      level = set.level;
     }
 
     const adminIsLosingRole = existing.role === Role.ADMIN && dto.role !== undefined && dto.role !== Role.ADMIN;
@@ -132,7 +172,12 @@ export class UsersService {
       await this.assertNotLastAdmin(groupId, id);
     }
 
-    const data: Prisma.UserUpdateInput = { ...dto };
+    const data: Prisma.UserUncheckedUpdateInput = {
+      ...dto,
+      type,
+      level,
+      setId: targetSetId,
+    };
     const invalidateSessions = dto.role !== undefined || dto.isActive !== undefined;
 
     if (invalidateSessions) {
@@ -198,15 +243,17 @@ export class UsersService {
     }
   }
 
-  private async assertSetInGroup(groupId: string, setId: string): Promise<void> {
+  private async findSetInGroup(groupId: string, setId: string): Promise<{ id: string; level: UserLevel }> {
     const set = await this.prisma.set.findFirst({
       where: { id: setId, groupId },
-      select: { id: true },
+      select: { id: true, level: true },
     });
 
     if (!set) {
       throw new NotFoundException('Set not found');
     }
+
+    return set;
   }
 
   private async assertNotLastAdmin(groupId: string, excludeUserId: string): Promise<void> {

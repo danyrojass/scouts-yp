@@ -7,9 +7,6 @@ CREATE TYPE "Role" AS ENUM ('BENEFICIARIO', 'DIRIGENTE', 'ADMIN', 'SUPER_ADMIN')
 -- CreateEnum
 CREATE TYPE "UserLevel" AS ENUM ('LOBATO', 'SCOUT', 'CAMINANTE', 'ROVER', 'JEFE');
 
--- CreateEnum
-CREATE TYPE "SetType" AS ENUM ('SEISENA', 'PATRULLA', 'EQUIPO', 'CLAN');
-
 -- CreateTable
 CREATE TABLE "groups" (
     "id" TEXT NOT NULL,
@@ -48,7 +45,7 @@ CREATE TABLE "users" (
 CREATE TABLE "sets" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "type" "SetType" NOT NULL,
+    "level" "UserLevel" NOT NULL,
     "groupId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -204,4 +201,12 @@ ALTER TABLE "progressions" ADD CONSTRAINT "progressions_groupId_fkey" FOREIGN KE
 -- Solo el SUPER_ADMIN de plataforma puede no pertenecer a un grupo
 ALTER TABLE "users" ADD CONSTRAINT "users_group_required"
 CHECK ("role" = 'SUPER_ADMIN' OR "groupId" IS NOT NULL);
+
+-- Los dirigentes no pertenecen a una sección
+ALTER TABLE "users" ADD CONSTRAINT "users_dirigente_no_set"
+CHECK ("type" <> 'DIRIGENTE' OR "setId" IS NULL);
+
+-- Una sección siempre es de una rama juvenil (los dirigentes no tienen sección)
+ALTER TABLE "sets" ADD CONSTRAINT "sets_level_not_jefe"
+CHECK ("level" <> 'JEFE');
 

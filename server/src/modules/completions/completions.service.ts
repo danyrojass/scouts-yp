@@ -31,7 +31,7 @@ export class CompletionsService {
         include: {
           activity: { select: { id: true, name: true, key: true, level: true, points: true } },
           user: { select: { id: true, name: true } },
-          set: { select: { id: true, name: true, type: true } },
+          set: { select: { id: true, name: true, level: true } },
         },
       }),
       this.prisma.activityCompletion.count({ where }),
@@ -73,11 +73,15 @@ export class CompletionsService {
     if (setId) {
       const set = await this.prisma.set.findFirst({
         where: { id: setId, groupId },
-        select: { id: true },
+        select: { id: true, level: true },
       });
 
       if (!set) {
         throw new NotFoundException('Set not found');
+      }
+
+      if (set.level !== activity.level) {
+        throw new HttpException(400, 'The section level does not match the activity level');
       }
     }
 
@@ -108,7 +112,7 @@ export class CompletionsService {
       include: {
         activity: { select: { id: true, name: true, key: true } },
         user: { select: { id: true, name: true } },
-        set: { select: { id: true, name: true, type: true } },
+        set: { select: { id: true, name: true, level: true } },
       },
     });
   }

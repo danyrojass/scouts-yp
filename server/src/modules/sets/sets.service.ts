@@ -1,9 +1,10 @@
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma, UserLevel } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateSetDto } from './dto/create-set.dto.js';
 import { UpdateSetDto } from './dto/update-set.dto.js';
 import { QuerySetsDto } from './dto/query-sets.dto.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
+import { HttpException } from '../../common/exceptions/http.exception.js';
 import { PaginatedResult } from '../../common/dto/pagination.dto.js';
 
 export class SetsService {
@@ -16,7 +17,7 @@ export class SetsService {
   async findAll(groupId: string, query: QuerySetsDto): Promise<PaginatedResult<any>> {
     const where: Prisma.SetWhereInput = { groupId };
 
-    if (query.type) where.type = query.type;
+    if (query.level) where.level = query.level;
     if (query.search) {
       where.name = { contains: query.search, mode: 'insensitive' };
     }
@@ -55,10 +56,12 @@ export class SetsService {
   }
 
   async create(groupId: string, dto: CreateSetDto) {
+    this.assertYouthLevel(dto.level);
+
     return this.prisma.set.create({
       data: {
         name: dto.name,
-        type: dto.type,
+        level: dto.level,
         groupId,
       },
     });
@@ -71,6 +74,22 @@ export class SetsService {
 
     if (!existing) {
       throw new NotFoundException('Set not found');
+    }
+
+    if (dto.level && dto.level !== existing.level) {
+      this.assertYouthLevel(dto.level);
+
+      // Todos los miembros deben pertenecer a la rama de la sección.
+      const mismatched = await this.prisma.user.count({
+        where: { setId: id, level: { not: dto.level } },
+      });
+
+      if (mismatched > 0) {
+        throw new HttpException(
+          409,
+          'The section has members of another level. Reassign them before changing the level',
+        );
+      }
     }
 
     return this.prisma.set.update({
@@ -89,5 +108,11 @@ export class SetsService {
     }
 
     await this.prisma.set.delete({ where: { id } });
+  }
+
+  private assertYouthLevel(level: UserLevel): void {
+    if (level === UserLevel.JEFE) {
+      throw new HttpException(400, 'A section cannot belong to the leaders level');
+    }
   }
 }

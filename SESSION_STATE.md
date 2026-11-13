@@ -2,6 +2,15 @@
 
 ## Estado actual: backend multi-grupo (Fases A–F completas)
 
+**Nov 13, 2026 — ADR 6: secciones por nivel.** Se eliminó `SetType`: `Set.type` pasó a
+`Set.level` (`UserLevel`, solo ramas juveniles) y el nombre visible de la unidad se deriva
+de `UNIT_NAME_BY_LEVEL` (Lobato → Seisena, Scout → Patrulla, Caminante → Equipo,
+Rover → Clan). Reglas nuevas: el nivel del usuario se alinea con el de su sección; un
+`DIRIGENTE` no puede tener sección; una sección no puede ser `JEFE`; aprobar una
+progresión acepta `setId` para reasignar o limpiar la sección; una completion exige que
+la sección sea del mismo nivel que la actividad. Backend y frontend compilan; docs
+actualizadas (`architecture.md`, `api-reference.md`, `glossary.md`, `CLAUDE.md`).
+
 **Nov 12, 2026** — El backend pasó de "un grupo autogestionado" a **plataforma
 multi-grupo**: `Group` es el tenant y cada usuario pertenece a un solo grupo, salvo
 el `SUPER_ADMIN` de plataforma. Detalle de la sesión al final del documento; plan en
@@ -127,7 +136,8 @@ Next phase: **Phase 5 — Activities + Completions**, then Payments/Progression,
 - **Actividades agrupadas por nivel** en la lista (`/activities`) y en "Actividad
   Reciente" del dashboard. El header de cada grupo muestra el `SetType` asociado
   (`Lobato→Seisena`, `Scout→Patrulla`, `Caminante→Equipo`, `Rover→Clan`, `Jefe→—`).
-  Helper compartido: `groupByLevel()` en `shared/utils/level-settype.util.ts`.
+  Helper compartido: `groupByLevel()` en `shared/utils/level.util.ts` (entonces
+  `level-settype.util.ts`; desde el ADR 6 la unidad se deriva de `Set.level`).
   También se corrigió el `track` de la tabla del dashboard (usaba `activityId`, que se
   repetía cuando varias secciones completaban la misma actividad).
 - **Tabla de posiciones separada por tipo de sección** (Seisena, Patrulla, Equipo,

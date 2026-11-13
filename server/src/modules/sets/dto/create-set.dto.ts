@@ -1,11 +1,12 @@
 import { IsEnum, IsString, MinLength } from 'class-validator';
-import { SetType } from '@prisma/client';
+import { UserLevel } from '@prisma/client';
 
 export class CreateSetDto {
   @IsString()
   @MinLength(2)
   name!: string;
 
-  @IsEnum(SetType)
-  type!: SetType;
+  /** Rama de la sección. No se admite JEFE: los dirigentes no tienen sección. */
+  @IsEnum(UserLevel)
+  level!: UserLevel;
 }

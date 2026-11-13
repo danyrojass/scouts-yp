@@ -28,13 +28,6 @@ enum UserLevel {
   JEFE
 }
 
-enum SetType {
-  SEISENA
-  PATRULLA
-  EQUIPO
-  CLAN
-}
-
 /// Un Grupo Scout es el tenant de la aplicación: dueño de todos sus datos.
 model Group {
   id        String   @id @default(cuid())
@@ -85,9 +78,10 @@ model User {
 }
 
 model Set {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  type      SetType
+  /// Rama de la sección (LOBATO/SCOUT/CAMINANTE/ROVER). Define el tipo de unidad.
+  level     UserLevel
   groupId   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

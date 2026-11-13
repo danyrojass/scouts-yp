@@ -2,6 +2,7 @@ import { PrismaClient, Prisma, Role, UserLevel } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateProgressionDto } from './dto/create-progression.dto.js';
 import { QueryProgressionsDto } from './dto/query-progressions.dto.js';
+import { ApproveProgressionDto } from './dto/approve-progression.dto.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
 import { HttpException } from '../../common/exceptions/http.exception.js';
 import { PaginatedResult } from '../../common/dto/pagination.dto.js';
@@ -92,10 +93,19 @@ export class ProgressionsService {
     });
   }
 
-  async approve(groupId: string, actor: Actor, id: string) {
+  async approve(groupId: string, actor: Actor, id: string, dto: ApproveProgressionDto) {
     const progression = await this.prisma.progression.findFirst({
       where: { id, groupId },
-      include: { user: { select: { id: true, level: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            level: true,
+            setId: true,
+            set: { select: { id: true, level: true } },
+          },
+        },
+      },
     });
 
     if (!progression) {
@@ -110,20 +120,70 @@ export class ProgressionsService {
       throw new HttpException(409, 'User level changed since the progression was created');
     }
 
+    const targetSetId = await this.resolveApprovalSet(
+      groupId,
+      progression.toLevel,
+      progression.user,
+      dto,
+    );
+
     return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.progression.update({
+      // Primero el usuario, para que el include de la progresión devuelva el nivel nuevo.
+      await tx.user.update({
+        where: { id: progression.userId },
+        data: { level: progression.toLevel, setId: targetSetId },
+      });
+
+      return tx.progression.update({
         where: { id },
         data: { approvedById: actor.id, approvedAt: new Date() },
         include: PROGRESSION_INCLUDE,
       });
+    });
+  }
 
-      await tx.user.update({
-        where: { id: progression.userId },
-        data: { level: progression.toLevel },
+  private async resolveApprovalSet(
+    groupId: string,
+    toLevel: UserLevel,
+    user: { setId: string | null; set: { id: string; level: UserLevel } | null },
+    dto: ApproveProgressionDto,
+  ): Promise<string | null> {
+    if (dto.setId !== undefined) {
+      if (dto.setId === null) {
+        return null;
+      }
+
+      const set = await this.prisma.set.findFirst({
+        where: { id: dto.setId, groupId },
+        select: { id: true, level: true },
       });
 
-      return updated;
-    });
+      if (!set) {
+        throw new NotFoundException('Set not found');
+      }
+
+      if (set.level !== toLevel) {
+        throw new HttpException(400, 'The section level must match the new level');
+      }
+
+      return set.id;
+    }
+
+    // Sin sección explícita: se conserva solo si ya pertenece a la nueva rama.
+    if (user.set && user.set.level === toLevel) {
+      return user.set.id;
+    }
+
+    // Pasar a dirigencia implica salir de la sección.
+    if (toLevel === UserLevel.JEFE) {
+      return null;
+    }
+
+    if (user.set) {
+      throw new HttpException(400, 'Reassign the user to a section of the new level');
+    }
+
+    return null;
   }
 
   async remove(groupId: string, id: string) {

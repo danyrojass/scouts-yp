@@ -7,7 +7,8 @@ import {LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, map, of, tap} from "rxjs";
-import {Set, SetType} from "../../models";
+import {Set} from "../../models";
+import {USER_LEVEL_ORDER, unitNameForLevel} from "../../../shared/utils/level.util";
 
 @Component({
     selector: 'app-set-list',
@@ -31,14 +32,15 @@ export class SetListComponent {
     private setService = inject(SetService);
     private currentUserValue = this.authService.user;
 
-    private readonly typeOrder = Object.values(SetType);
+    private readonly levelOrder = USER_LEVEL_ORDER;
+    protected readonly unitNameForLevel = unitNameForLevel;
 
     filteredSets = computed(() => {
         const term = this.searchTerm().toLowerCase().trim();
         if (!term) return this.sets();
         return this.sets().filter(s =>
             s.name.toLowerCase().includes(term) ||
-            s.type.toLowerCase().includes(term)
+            (unitNameForLevel(s.level)?.toLowerCase().includes(term) ?? false)
         );
     });
 
@@ -50,7 +52,7 @@ export class SetListComponent {
                     ? sets
                     : sets.filter(s => s.groupId === user?.groupId);
                 return filtered.sort((a, b) =>
-                    this.typeOrder.indexOf(a.type) - this.typeOrder.indexOf(b.type)
+                    this.levelOrder.indexOf(a.level) - this.levelOrder.indexOf(b.level)
                 );
             }),
             tap(() => this.isLoading.set(false)),

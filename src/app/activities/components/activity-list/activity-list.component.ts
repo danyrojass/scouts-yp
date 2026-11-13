@@ -8,7 +8,7 @@ import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
 import {ActivityService} from "../../services/activity.service";
 import {Activity} from "../../models";
-import {groupByLevel} from '../../../shared/utils/level-settype.util';
+import {groupByLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-list',
@@ -37,7 +37,7 @@ export class ActivityListComponent {
         );
     });
 
-    /** Actividades agrupadas por nivel, mostrando el SetType asociado (Scout → Patrulla). */
+    /** Actividades agrupadas por nivel, mostrando la unidad asociada (Scout → Patrulla). */
     groupedActivities = computed(() => groupByLevel(this.filteredActivities()));
 
     private authService = inject(AuthService);

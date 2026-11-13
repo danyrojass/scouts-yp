@@ -57,7 +57,7 @@
                     </option>
                     @for (set of filteredSets(); track set.id) {
                         <option [value]="set.id">
-                            {{ set.name }} ({{ set.type }})
+                            {{ set.name }} ({{ unitNameForLevel(set.level) }})
                         </option>
                     }
                 </select>

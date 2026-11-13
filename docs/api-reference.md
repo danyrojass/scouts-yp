@@ -12,7 +12,10 @@ header `Authorization: Bearer <token>`.
 | `UserType` | `BENEFICIARIO`, `DIRIGENTE` |
 | `Role` | `BENEFICIARIO`, `DIRIGENTE`, `ADMIN`, `SUPER_ADMIN` |
 | `UserLevel` | `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE` |
-| `SetType` | `SEISENA`, `PATRULLA`, `EQUIPO`, `CLAN` |
+
+`Set.level` usa `UserLevel`: la sección guarda su rama (solo las cuatro juveniles) y
+el nombre visible de la unidad se deriva (Lobato → Seisena, Scout → Patrulla,
+Caminante → Equipo, Rover → Clan). No existe un enum `SetType`.
 
 ## Respuesta estándar
 
@@ -32,6 +35,7 @@ Error: `{ "success": false, "error": { "message": "...", "details?" } }`
 Body: `{ email, password, name, groupName, groupNumber, groupCity, type?, level? }`
 Crea un Grupo nuevo (slug autogenerado) y el usuario `ADMIN` de ese grupo, en una
 transacción. Es el único alta pública: los demás miembros los crea un dirigente.
+Puede deshabilitarse con `ALLOW_PUBLIC_REGISTRATION=false` (responde `403`).
 ```
 201 { "success": true, "data": { "user": {...}, "group": {...} } }  + Set-Cookie
 409 { success:false, error.message: "Email already registered" }
@@ -64,6 +68,17 @@ Requiere `authenticate`.
 404 "User not found"
 ```
 
+### `PATCH /auth/password`
+Requiere `authenticate`.
+Body: `{ currentPassword (min 6), newPassword (min 8) }`
+Cambia la contraseña y **invalida todas las sesiones** del usuario (incrementa
+`tokenVersion`, borra sus refresh tokens).
+```
+200 { "success": true, "data": { "message": "Password changed. Please log in again" } }
+401 "Current password is incorrect"
+400 "New password must be different from the current one"
+```
+
 ## Users
 
 Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
@@ -81,6 +96,10 @@ Reglas:
 - Un `DIRIGENTE` no puede crear ni editar usuarios `ADMIN`.
 - Nadie puede asignar `SUPER_ADMIN`.
 - `setId` debe pertenecer al mismo grupo.
+- Si se asigna `setId`, el `level` del usuario se alinea con `set.level`; si se envía un
+  `level` explícito que no coincide, `400`.
+- Un `DIRIGENTE` no puede pertenecer a una sección (`400`) y su `level` debe ser
+  `JEFE` (`400` si se envía otro).
 - No se puede degradar/desactivar al último `ADMIN` activo (409).
 - Cambiar `role` o `isActive` incrementa `tokenVersion` e invalida las sesiones del usuario.
 
@@ -117,8 +136,13 @@ Todos opcionales: `name?`, `type?`, `role?`, `level?`, `setId?`, `isActive?`
 ### Query params `GET /groups`
 `search?` (name/number/city), `limit`, `offset`, `sortBy`, `sortOrder`.
 
-### Body `POST /groups` / `PATCH /groups/:id`
-`{ name (min 2), number (String, min 1), city (min 2), isActive? }` — todos opcionales en PATCH.
+### Body `POST /groups`
+`{ name (min 2), number (String, min 1), city (min 2), admin: { email, password (min 6),
+name (min 2) } }` — crea el grupo y su primer `ADMIN` en una transacción.
+Si el email ya existe, `409`.
+
+### Body `PATCH /groups/:id`
+Todos opcionales: `name?`, `number?`, `city?`, `isActive?`.
 `isActive` solo lo aplica el `SUPER_ADMIN` por la ruta de plataforma.
 
 ### Acceso de plataforma a rutas de grupo
@@ -139,11 +163,15 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 | DELETE | `/sets/:id` | `ADMIN`+ | borrado físico |
 
 ### Query params `GET /sets`
-`type?` (`SEISENA`|`PATRULLA`|`EQUIPO`|`CLAN`), `search?` (name, case-insensitive),
-`limit`, `offset`, `sortBy`, `sortOrder`.
+`level?` (`LOBATO`|`SCOUT`|`CAMINANTE`|`ROVER`), `search?` (name, case-insensitive),
+`limit`, `offset`, `sortBy` (`createdAt`|`updatedAt`|`name`|`level`), `sortOrder`.
 
 ### Body `POST /sets` / `PATCH /sets/:id`
-`{ name (min 2), type (SetType) }` — en PATCH todos opcionales.
+`{ name (min 2), level (UserLevel) }` — en PATCH todos opcionales.
+
+- `level` es la rama de la sección; no admite `JEFE` (`400`).
+- Cambiar el `level` de una sección con miembros de otro nivel responde `409`.
+- Al asignar un usuario a la sección, su `level` se alinea con `set.level`.
 
 El `groupId` sale del contexto de autenticación; no se acepta en el body.
 
@@ -191,6 +219,7 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 - Un usuario no puede completar dos veces la misma actividad (`409`).
 - `BENEFICIARIO` solo puede registrarse a sí mismo y a su propio `setId` (`403`).
 - Actividad, usuario y set deben pertenecer al grupo (`404`).
+- El `level` de la sección debe coincidir con el `level` de la actividad (`400`).
 - `DIRIGENTE`+ puede registrar para cualquier usuario del grupo, indicando `setId`.
 
 ## Payments
@@ -241,6 +270,15 @@ Todas requieren `authenticate` + `requireGroup` (scoped al grupo del JWT).
 Aprobar dos veces o aprobar una progresión cuyo `fromLevel` ya no coincide con el nivel
 actual devuelve `409`.
 
+### Body `PATCH /progressions/:id/approve`
+`{ setId? (string | null) }` — sección de la nueva rama.
+
+- `setId` con una sección de otro nivel → `400`; si no es del grupo → `404`.
+- `setId: null` desasigna la sección.
+- Si se omite, se conserva la sección actual **solo** si su `level` coincide con
+  `toLevel`; si no coincide, `400` (hay que reasignar explícitamente).
+- Pasar a `JEFE` limpia la sección.
+
 ## Dashboard
 
 No hay endpoint de dashboard: los agregados (puntos, ranking por tipo de sección,
@@ -255,7 +293,7 @@ actividad reciente) se calculan en el frontend sobre `users`, `sets`, `activitie
 | 401 | token faltante, inválido o expirado |
 | 403 | rol insuficiente, usuario sin grupo o `SUPER_ADMIN` sin `X-Group-Id` |
 | 404 | recurso no encontrado (scoped a grupo, no se filtra existencia cross-tenant) |
-| 409 | email, `key` de actividad o completion duplicados; progresión ya aprobada o nivel desactualizado; intento de dejar al grupo sin administradores |
+| 409 | email, `key` de actividad o completion duplicados; progresión ya aprobada o nivel desactualizado; cambio de nivel de sección con miembros inconsistentes; intento de dejar al grupo sin administradores |
 | 500 | error no manejado |
 
 ## Notas de producción

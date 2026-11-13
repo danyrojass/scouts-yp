@@ -60,7 +60,8 @@ Los roles son jerárquicos: `BENEFICIARIO < DIRIGENTE < ADMIN < SUPER_ADMIN`.
 ### 3.4 Secciones
 
 - Seisena, Patrulla, Equipo y Clan, correspondientes a las ramas Lobato, Scout,
-  Caminante y Rover respectivamente.
+  Caminante y Rover respectivamente. La sección guarda su `level` y el nombre de la
+  unidad se deriva de una constante (`UNIT_NAME_BY_LEVEL`).
 - Cada beneficiario pertenece a una sección; las secciones son la unidad de
   agrupamiento para rankings y métricas.
 - Los dirigentes (`JEFE`) no pertenecen a una sección.
@@ -90,6 +91,9 @@ Los roles son jerárquicos: `BENEFICIARIO < DIRIGENTE < ADMIN < SUPER_ADMIN`.
 - Se registra un ascenso pendiente (`fromLevel` actual → `toLevel` superior) y un
   dirigente lo aprueba; al aprobar se actualiza el nivel del usuario en la misma
   transacción.
+- La aprobación acepta `setId` para reasignar la sección a la nueva rama; `null` la
+  desasigna y, si se omite, solo se conserva cuando ya coincide con `toLevel`. Pasar a
+  `JEFE` limpia la sección.
 - Reaprobar o aprobar sobre un nivel desactualizado devuelve `409`.
 
 ### 3.9 Dashboard
@@ -190,7 +194,7 @@ Respuesta uniforme: `{ success, data }` / `{ success: false, error: { message, d
 | `auth` | ✅ | register, login, refresh, logout, me, change password |
 | `users` | ✅ | CRUD + soft delete |
 | `groups` | ✅ | `/me`, CRUD de plataforma, alta con admin inicial |
-| `sets` | ✅ | CRUD + filtros (type/groupId/search) |
+| `sets` | ✅ | CRUD + filtros (level/search) |
 | `activities` + `completions` | ✅ | CRUD de actividades + registro de completions (scoped) |
 | `payments` + `progressions` | ✅ | pagos y ascensos (scoped, con aprobación) |
 | `dashboard` | n/a | agregados en el frontend sobre endpoints scoped |
@@ -254,17 +258,16 @@ User ──1:N── RefreshToken
    dan de baja lógicamente.
 5. **Express 4 + `asyncHandler`**: se mantuvo Express 4 (deps existentes) con wrapper en
    vez de migrar a Express 5.
-6. **Secciones por nivel (`Set.level`), sin `SetType`** (decidido, pendiente de
-   implementar). El tipo de unidad es 1:1 con la rama: Lobato→Seisena,
-   Scout→Patrulla, Caminante→Equipo, Rover→Clan; los dirigentes (`JEFE`) no tienen
-   sección. Por eso `SetType` es un enum derivado que no debe guardarse como dato:
-   duplica `User.level` y permite estados inconsistentes (un `LOBATO` en un `CLAN`, o
-   un ascenso aprobado que deja al usuario en una sección de su rama anterior).
-   El rediseño reemplaza `Set.type` por `Set.level` (solo las cuatro ramas juveniles),
-   deriva el nombre visible de una única constante y valida que el nivel del usuario
-   coincida con el de su sección. La unidad modelada es la **unidad chica** del
-   programa (Seisena/Patrulla/Equipo/Clan), no la unidad de rama
-   (Manada/Tropa/Comunidad).
+6. **Secciones por nivel (`Set.level`), sin `SetType`** (implementado). El tipo de
+   unidad es 1:1 con la rama: Lobato→Seisena, Scout→Patrulla, Caminante→Equipo,
+   Rover→Clan; los dirigentes (`JEFE`) no tienen sección. Por eso `SetType` era un
+   enum derivado que no debía guardarse como dato: duplicaba `User.level` y permitía
+   estados inconsistentes (un `LOBATO` en un `CLAN`, o un ascenso aprobado que dejaba
+   al usuario en una sección de su rama anterior). La implementación reemplazó
+   `Set.type` por `Set.level` (solo las cuatro ramas juveniles), deriva el nombre
+   visible de `UNIT_NAME_BY_LEVEL` y valida que el nivel del usuario coincida con el de
+   su sección. La unidad modelada es la **unidad chica** del programa
+   (Seisena/Patrulla/Equipo/Clan), no la unidad de rama (Manada/Tropa/Comunidad).
 
 ## 11. Estado y pendientes
 
@@ -274,6 +277,5 @@ User ──1:N── RefreshToken
 - ⏳ **Fase H:** tests cross-tenant automatizados, rate limit en auth, auditoría de
   `SUPER_ADMIN`, cierre de `firestore.rules`.
 - ⏳ **Fase D:** import xlsx en backend e invitaciones (opcional).
-- ⏳ **ADR 6:** implementar `Set.level` (schema, DTOs, services, frontend y docs).
 - Antes del próximo deploy: resetear/migrar la DB dev (la migración inicial fue
   regenerada).

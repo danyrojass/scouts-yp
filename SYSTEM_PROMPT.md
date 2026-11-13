@@ -30,7 +30,8 @@ There are two independent axes on every user:
 - id, name, number, city, createdAt
 
 **sets/**
-- id, name, type (SetType: Lobato/Scout/Caminante/Rover), groupId, createdAt
+- id, name, level (UserLevel; la rama de la sección), groupId, createdAt
+- El nombre de la unidad se deriva: Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan
 
 **activities/**
 - id, name, description, key, level (UserLevel), points, createdAt

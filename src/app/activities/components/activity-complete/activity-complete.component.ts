@@ -14,7 +14,7 @@ import {SetService} from '../../../sets/services/set.service';
 import {Set} from '../../../sets/models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
-import {getSetsForLevel} from '../../../shared/utils/level-settype.util';
+import {getSetsForLevel, unitNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-complete',
@@ -64,6 +64,8 @@ export class ActivityCompleteComponent implements OnInit {
     });
 
     maxPoints = computed(() => this.selectedActivity()?.points ?? 0);
+
+    protected readonly unitNameForLevel = unitNameForLevel;
 
     filteredSets = computed(() => {
         const activity = this.selectedActivity();
