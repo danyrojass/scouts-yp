@@ -13,6 +13,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   CORS_ORIGIN: z.string().default('http://localhost:4200'),
+  ALLOW_PUBLIC_REGISTRATION: z.enum(['true', 'false']).default('true').transform((v) => v === 'true'),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('debug'),
 });
 

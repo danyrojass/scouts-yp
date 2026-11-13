@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { env } from '../../config/env.js';
+import { ForbiddenException } from '../../common/exceptions/forbidden.exception.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 
 const ACCESS_MAX_AGE = 15 * 60 * 1000;
 const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
@@ -13,6 +15,10 @@ export class AuthController {
   }
 
   async register(req: Request, res: Response): Promise<void> {
+    if (!env.ALLOW_PUBLIC_REGISTRATION) {
+      throw new ForbiddenException('Public registration is disabled');
+    }
+
     const result = await this.authService.register(req.body);
 
     this.setCookies(res, result.accessToken, result.refreshToken);
@@ -56,6 +62,15 @@ export class AuthController {
   async me(req: Request, res: Response): Promise<void> {
     const user = await this.authService.me(req.user!.sub);
     res.json({ success: true, data: { user } });
+  }
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    const dto = req.body as ChangePasswordDto;
+    await this.authService.changePassword(req.user!.sub, dto);
+
+    this.clearCookies(res);
+
+    res.json({ success: true, data: { message: 'Password changed. Please log in again' } });
   }
 
   private setCookies(res: Response, accessToken: string, refreshToken: string): void {

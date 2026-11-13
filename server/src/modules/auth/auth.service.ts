@@ -6,6 +6,7 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { env } from '../../config/env.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { UnauthorizedException } from '../../common/exceptions/unauthorized.exception.js';
 import { NotFoundException } from '../../common/exceptions/not-found.exception.js';
 import { HttpException } from '../../common/exceptions/http.exception.js';
@@ -147,6 +148,38 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /** Cambia la contraseña y cierra todas las sesiones del usuario. */
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const currentValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!currentValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new HttpException(400, 'New password must be different from the current one');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: { passwordHash, tokenVersion: { increment: 1 } },
+      });
+
+      await tx.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    });
   }
 
   private async generateTokens(user: TokenUser) {

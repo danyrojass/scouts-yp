@@ -5,6 +5,7 @@ import { authenticate } from '../../common/middleware/auth.middleware.js';
 import { asyncHandler } from '../../common/middleware/async-handler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 
 const authRouter = Router();
 const controller = new AuthController();
@@ -14,5 +15,6 @@ authRouter.post('/login', validateDto(LoginDto), asyncHandler((req, res) => cont
 authRouter.post('/refresh', asyncHandler((req, res) => controller.refresh(req, res)));
 authRouter.post('/logout', asyncHandler((req, res) => controller.logout(req, res)));
 authRouter.get('/me', authenticate, asyncHandler((req, res) => controller.me(req, res)));
+authRouter.patch('/password', authenticate, validateDto(ChangePasswordDto), asyncHandler((req, res) => controller.changePassword(req, res)));
 
 export { authRouter };
