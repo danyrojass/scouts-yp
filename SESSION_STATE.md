@@ -11,6 +11,23 @@ progresión acepta `setId` para reasignar o limpiar la sección; una completion 
 la sección sea del mismo nivel que la actividad. Backend y frontend compilan; docs
 actualizadas (`architecture.md`, `api-reference.md`, `glossary.md`, `CLAUDE.md`).
 
+### Dónde retomar (estado al 13 Nov 2026)
+
+- Rama `refactor-backend`, último commit `17030d5 refactor: secciones por nivel sin SetType`.
+  Árbol limpio.
+- Verificado: `prisma validate`, `prisma generate`, `server: tsc --noEmit` y
+  `frontend: ng build --configuration development`.
+- El cliente Prisma ya está regenerado. El `tsx watch` local se detuvo para liberar el
+  DLL del query engine; hay que levantarlo de nuevo si se retoma el backend en caliente.
+- **Pendiente inmediato:** resetear/migrar la DB dev (la migración inicial se regeneró) y
+  rebuildear el stack Docker, que hoy corre código viejo (pre-refactor).
+- **Pendiente grande:** Fase G (migrar el frontend de Firestore a la API). Mientras tanto
+  la app productiva en Vercel sigue leyendo `set.type` desde Firestore: no deployar solo
+  el frontend nuevo sin migrar los datos.
+- Otros pendientes: Fase H (tests cross-tenant, rate limit, auditoría de `SUPER_ADMIN`,
+  cierre de `firestore.rules`) y Fase D (import xlsx en backend, opcional).
+- Deuda anotada: `User.type` duplica información de `User.role`; no se tocó en este ADR.
+
 **Nov 12, 2026** — El backend pasó de "un grupo autogestionado" a **plataforma
 multi-grupo**: `Group` es el tenant y cada usuario pertenece a un solo grupo, salvo
 el `SUPER_ADMIN` de plataforma. Detalle de la sesión al final del documento; plan en
