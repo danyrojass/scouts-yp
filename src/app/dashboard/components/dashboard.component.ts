@@ -12,6 +12,7 @@ import {User, UserLevel, UserType} from '../../users/models';
 import {Group} from '../../groups/models';
 import {Set} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
+import {computeActivityStats} from '../../activities/utils/completion-stats.util';
 import {groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
@@ -35,13 +36,17 @@ interface GroupedSets {
 interface LeaderboardEntry {
     set: Set;
     totalPoints: number;
-    completionCount: number;
+    completedCount: number;
+    totalActivities: number;
 }
 
 interface CompletedActivityItem {
     level: UserLevel;
     name: string;
-    completion: ActivityCompletion;
+    activityId: string;
+    completedAt: Date;
+    earnedPoints: number;
+    sections: string[];
 }
 
 @Component({
@@ -79,20 +84,54 @@ export class DashboardComponent implements OnInit {
         return grouped;
     });
 
+    /** Contadores de actividades completadas, sin multiplicar por integrantes. */
+    activityStats = computed(() => computeActivityStats(
+        this.activities(),
+        this.groupSets(),
+        this.groupUsers(),
+        this.completedActivities()
+    ));
+
     /**
-     * Actividad reciente agrupada por nivel, mostrando la unidad correspondiente
-     * (Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan).
+     * Actividad reciente agrupada por nivel, con una fila por actividad (no por
+     * completación) y las secciones que la completaron.
      */
     groupedCompletedActivities = computed(() => {
-        const activitiesById = new Map(this.activities().map(a => [a.id!, a]));
-        const rows: CompletedActivityItem[] = [];
+        const stats = this.activityStats();
+        const setsById = new Map(this.groupSets().map(s => [s.id!, s]));
+        const byActivity = new Map<string, CompletedActivityItem>();
 
         for (const completion of this.completedActivities()) {
-            const activity = activitiesById.get(completion.activityId);
-            if (activity) {
-                rows.push({level: activity.level, name: activity.name, completion});
+            const activity = stats.activitiesById.get(completion.activityId);
+            if (!activity?.id) continue;
+
+            let item = byActivity.get(activity.id);
+            if (!item) {
+                item = {
+                    level: activity.level,
+                    name: activity.name,
+                    activityId: activity.id,
+                    completedAt: completion.completedAt,
+                    earnedPoints: 0,
+                    sections: []
+                };
+                byActivity.set(activity.id, item);
+            }
+
+            item.earnedPoints += completion.earnedPoints;
+            if (new Date(completion.completedAt) > new Date(item.completedAt)) {
+                item.completedAt = completion.completedAt;
+            }
+
+            const set = completion.setId ? setsById.get(completion.setId) : undefined;
+            if (set && !item.sections.includes(set.name)) {
+                item.sections.push(set.name);
             }
         }
+
+        const rows = [...byActivity.values()].sort(
+            (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+        );
 
         return groupByLevel(rows);
     });
@@ -124,23 +163,25 @@ export class DashboardComponent implements OnInit {
         this.isDirigente() ? 'Puntos del grupo' : 'Puntos de mi sección'
     );
 
-    /** Actividades distintas con al menos una completación (no registros de completación). */
-    completedActivitiesCount = computed(() =>
-        new Set(this.completedActivities().map(c => c.activityId)).size
-    );
+    /** Actividades completadas por al menos una sección (no registros de completación). */
+    completedActivitiesCount = computed(() => this.activityStats().completedCount);
 
     leaderboard = computed(() => {
-        const sets = this.groupSets();
+        const stats = this.activityStats();
         const completions = this.completedActivities();
         const entries: LeaderboardEntry[] = [];
 
-        for (const set of sets) {
-            const setCompletions = completions.filter(c => c.setId === set.id);
-            if (setCompletions.length > 0) {
+        for (const set of this.groupSets()) {
+            if (!set.id) continue;
+            const setStats = stats.bySet.get(set.id);
+            if (setStats && setStats.completedCount > 0) {
                 entries.push({
                     set,
-                    totalPoints: setCompletions.reduce((sum, c) => sum + c.earnedPoints, 0),
-                    completionCount: setCompletions.length
+                    totalPoints: completions
+                        .filter(c => c.setId === set.id)
+                        .reduce((sum, c) => sum + c.earnedPoints, 0),
+                    completedCount: setStats.completedCount,
+                    totalActivities: setStats.totalActivities
                 });
             }
         }

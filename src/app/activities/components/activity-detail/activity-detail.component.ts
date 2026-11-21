@@ -105,6 +105,13 @@ export class ActivityDetailComponent {
         }
     }
 
+    onComplete(): void {
+        const id = this.activity()?.id;
+        if (id) {
+            this.router.navigate(['/activities/complete'], {queryParams: {activityId: id}});
+        }
+    }
+
     onBack(): void {
         this.router.navigate(['/activities']);
     }

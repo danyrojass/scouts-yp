@@ -34,6 +34,17 @@ Términos del dominio scout y de la aplicación.
 | **Progression** | Progresión de un beneficiario entre niveles, con aprobación de un dirigente. |
 | **RefreshToken** | Token de refresco con rotación y revocación. |
 
+## Actividades completadas
+
+Una **sección completó una actividad** cuando todos sus integrantes tienen una
+completación registrada, o cuando existe una completación histórica cargada por un
+dirigente para esa sección (registro que no pertenece a ningún integrante). Las
+secciones sin integrantes no cuentan salvo que tengan ese registro histórico.
+
+El contador del dashboard es de **actividades distintas**, no de registros de
+completación: una actividad completada por los 8 miembros de una patrulla cuenta 1,
+no 8. El contador por sección se mide sobre las actividades de su nivel.
+
 ## Unidades por nivel
 
 La sección guarda la rama (`Set.level`); el nombre visible de la unidad chica se deriva

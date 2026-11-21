@@ -52,7 +52,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                             </div>
                             <div class="stat-content">
-                                <div class="value">{{ completedActivitiesCount() }}</div>
+                                <div class="value">{{ completedActivitiesCount() }}<span class="stat-total">/{{ activities().length }}</span></div>
                                 <div class="label">Actividades completadas</div>
                             </div>
                         </div>
@@ -108,7 +108,7 @@
                                                         <td class="col-set">
                                                             <div class="set-name">{{ entry.set.name }}</div>
                                                         </td>
-                                                        <td class="col-completions">{{ entry.completionCount }}</td>
+                                                        <td class="col-completions">{{ entry.completedCount }}/{{ entry.totalActivities }}</td>
                                                         <td class="col-points">
                                                             <span class="points-value">{{ entry.totalPoints }}</span>
                                                         </td>
@@ -180,6 +180,7 @@
                                     <thead>
                                         <tr>
                                             <th>Actividad</th>
+                                            <th>Secciones</th>
                                             <th>Fecha</th>
                                             <th>Puntos</th>
                                         </tr>
@@ -187,18 +188,19 @@
                                     <tbody>
                                         @for (group of groupedCompletedActivities(); track group.level) {
                                             <tr class="level-row">
-                                                <td colspan="3">
+                                                <td colspan="4">
                                                     <span class="level-label">{{ group.level }}</span>
                                                     @if (group.unitName) {
                                                         <span class="badge badge-secondary">{{ group.unitName }}</span>
                                                     }
                                                 </td>
                                             </tr>
-                                            @for (item of group.items.slice(0, 5); track item.completion.id) {
+                                            @for (item of group.items.slice(0, 5); track item.activityId) {
                                                 <tr>
                                                     <td>{{ item.name }}</td>
-                                                    <td>{{ item.completion.completedAt | date:'dd/MM/yyyy' }}</td>
-                                                    <td><span class="badge badge-success">+{{ item.completion.earnedPoints }}</span></td>
+                                                    <td>{{ item.sections.join(', ') || '—' }}</td>
+                                                    <td>{{ item.completedAt | date:'dd/MM/yyyy' }}</td>
+                                                    <td><span class="badge badge-success">+{{ item.earnedPoints }}</span></td>
                                                 </tr>
                                             }
                                         }

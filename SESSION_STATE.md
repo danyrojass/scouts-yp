@@ -1,5 +1,19 @@
 # Session State — Scout YP Migration
 
+## Nov 21, 2026 — Dashboard y completado de actividades (frontend Firestore)
+
+- Nueva regla compartida en `completion-stats.util.ts`: una sección completó una
+  actividad si todos sus integrantes tienen completación o si existe el registro
+  histórico cargado por un dirigente. El dashboard cuenta actividades distintas
+  (no registros): tabla de posiciones `completadas/total del nivel` y "Actividad
+  Reciente" agrupada por actividad con las secciones que la completaron.
+- `/activities/complete` reemplaza el formulario de un solo registro por una lista
+  de miembros de la sección derivada del nivel de la actividad, con puntos por
+  miembro y guardado atómico en un batch de Firestore. Acepta `?activityId=` para
+  llegar preseleccionado desde el listado y el detalle.
+- Los puntos totales del leaderboard ahora son la suma de puntos por miembro (antes
+  era un registro por sección). Backend y datos históricos sin cambios.
+
 ## Estado actual: backend multi-grupo (Fases A–F completas)
 
 **Nov 13, 2026 — ADR 6: secciones por nivel.** Se eliminó `SetType`: `Set.type` pasó a

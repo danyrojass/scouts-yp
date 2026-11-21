@@ -1,0 +1,70 @@
+.page-header p {
+    color: var(--neutral-500);
+    margin-top: var(--space-1);
+}
+
+.section-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.section-chip {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font: inherit;
+    padding: var(--space-2) var(--space-3);
+}
+
+.section-chip small {
+    color: var(--neutral-500);
+    margin-left: var(--space-1);
+}
+
+.section-chip.active {
+    background: var(--primary-600);
+    border-color: var(--primary-600);
+    color: #fff;
+}
+
+.section-chip.active small {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.members-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+    overflow: hidden;
+}
+
+.members-header {
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: var(--space-2);
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+}
+
+.members-header h2 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.points-input {
+    max-width: 90px;
+}
+
+.data-table .row-completed {
+    background: var(--success-light);
+}
+
+.save-summary {
+    color: var(--neutral-600);
+    font-weight: 500;
+    margin-bottom: var(--space-2);
+}

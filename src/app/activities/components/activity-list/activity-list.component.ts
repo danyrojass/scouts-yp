@@ -64,6 +64,10 @@ export class ActivityListComponent {
         this.router.navigate(['/activities', id]);
     }
 
+    onCompleteActivity(id: string): void {
+        this.router.navigate(['/activities/complete'], {queryParams: {activityId: id}});
+    }
+
     onEditActivity(id: string): void {
         this.router.navigate(['/activities/edit', id]);
     }

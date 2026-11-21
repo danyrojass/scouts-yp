@@ -10,7 +10,8 @@ import {
     orderBy,
     query,
     updateDoc,
-    where
+    where,
+    writeBatch
 } from '@angular/fire/firestore';
 import {firstValueFrom, Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
@@ -89,6 +90,32 @@ export class ActivityService {
             completed_at: completion.completedAt instanceof Date ? completion.completedAt : new Date(completion.completedAt),
             earned_points: completion.earnedPoints
         });
+    }
+
+    /** Escribe varias completaciones y bajas en un único batch atómico. */
+    async saveCompletions(toCreate: ActivityCompletion[], toDelete: string[] = []): Promise<void> {
+        if (toCreate.length === 0 && toDelete.length === 0) return;
+
+        const batch = writeBatch(this.firestore);
+        const completionsRef = collection(this.firestore, 'activity-completion');
+
+        for (const completion of toCreate) {
+            batch.set(doc(completionsRef), {
+                activity_id: completion.activityId,
+                set_id: completion.setId,
+                user_id: completion.userId,
+                completed_at: completion.completedAt instanceof Date
+                    ? completion.completedAt
+                    : new Date(completion.completedAt),
+                earned_points: completion.earnedPoints
+            });
+        }
+
+        for (const id of toDelete) {
+            batch.delete(doc(this.firestore, `activity-completion/${id}`));
+        }
+
+        await batch.commit();
     }
 
     getCompletionsBySetIds(setIds: string[]): Observable<ActivityCompletion[]> {

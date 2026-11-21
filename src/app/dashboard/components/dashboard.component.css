@@ -108,6 +108,12 @@
     margin-bottom: var(--space-1);
 }
 
+.stat-content .stat-total {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--neutral-500);
+}
+
 .stat-content .label {
     font-size: 0.8125rem;
     color: var(--neutral-500);
