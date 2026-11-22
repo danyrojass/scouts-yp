@@ -1,5 +1,18 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Favicon con el logo del grupo
+
+- Se generó `public/favicon.ico` a partir de
+  `C:\Users\danyr\Documents\dany\scout\Insignias\logo.jpg` (1284×1285).
+- Conversión local con System.Drawing: se recortó el contenido (ignorando las
+  barras oscuras de los costados y el ruido JPEG), se cuadró sobre fondo
+  blanco y se exportaron 5 tamaños embebidos (16/32/48/64/128) en un único ICO.
+- `src/index.html` ahora referencia `favicon.ico`; se eliminó `favicon.svg` (el
+  SVG de la flor de lis sigue disponible en el historial de git).
+- El script de conversión quedó en
+  `C:\Users\danyr\AppData\Local\Temp\opencode\make-favicon.ps1` y el preview en
+  `C:\Users\danyr\AppData\Local\Temp\opencode\favicon-logo\preview.png`.
+
 ## Nov 22, 2026 — Favicon actualizado
 
 - Se reemplazó `public/favicon.svg` por una **flor de lis simple y simétrica**
