@@ -15,10 +15,10 @@
                         <li><strong>email</strong> - Correo electrónico (obligatorio)</li>
                         <li><strong>dateOfBirth</strong> - Fecha de nacimiento (opcional)</li>
                         <li><strong>type</strong> - Tipo: Beneficiario, Dirigente (opcional)</li>
-                        <li><strong>level</strong> - Nivel: Lobato, Colorado, Manada, Tropa, Clan, Roquer, Coordinamiento (opcional)</li>
-                        <li><strong>groupId</strong> - ID del grupo (opcional)</li>
-                        <li><strong>setId</strong> - ID del set (opcional)</li>
+                        <li><strong>level</strong> - Nivel: Lobato, Scout, Caminante, Rover, Jefe (opcional)</li>
+                        <li><strong>setId</strong> - ID de la sección (opcional)</li>
                     </ul>
+                    <p class="file-input-hint">Los usuarios se agregan automáticamente al grupo del dirigente.</p>
                 </div>
 
                 @if (errorMessage) {
@@ -73,7 +73,6 @@
                                         <th>Fecha Nac.</th>
                                         <th>Tipo</th>
                                         <th>Nivel</th>
-                                        <th>Grupo</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -84,7 +83,6 @@
                                             <td>{{ user.dateOfBirth }}</td>
                                             <td>{{ user.type }}</td>
                                             <td>{{ user.level }}</td>
-                                            <td>{{ user.groupId }}</td>
                                         </tr>
                                     }
                                 </tbody>

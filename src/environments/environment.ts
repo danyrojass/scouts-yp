@@ -11,6 +11,8 @@ export const environment = {
     },
     config: {
         showRegister: false,
-        allowUserImport: true
+        allowUserImport: true,
+        // Despliegue para un único grupo: se ocultan registro y gestión de grupos.
+        singleGroupMode: true
     }
 };

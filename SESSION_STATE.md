@@ -1,5 +1,21 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Despliegue en modo grupo único (Scout YP 62)
+
+- El deploy de Vercel es para un solo grupo: se mantiene el modelo `Group`/`groupId`
+  en los datos (no se migra nada) pero se desactivan las pantallas de registro y
+  gestión de grupos.
+- `environment.config.singleGroupMode: true` oculta el link "Grupos" y el registro;
+  las rutas `/groups` y `/register` redirigen al dashboard.
+- Todo usuario creado (formulario o importación CSV) hereda el `groupId` del
+  dirigente autenticado. El formulario de usuario ya no permite elegir grupo.
+- `UserService.getUsers()` y `SetService.getSets()` filtran en el query por el grupo
+  del usuario logueado: ya no traen documentos de otros grupos para filtrar en cliente.
+- Dashboard: un usuario histórico sin `group_id` ya no deja el tablero vacío.
+- `firestore.rules`: lectura para autenticados, escritura sólo para dirigentes y
+  dentro de su grupo (usuarios/secciones); `groups` y colecciones nuevas quedan
+  cerradas a escritura. Requiere `firebase deploy --only firestore:rules`.
+
 ## Nov 22, 2026 — Suite de tests verde y mejoras de usabilidad
 
 - Se creó `src/app/testing/mocks/firebase.mocks.ts`: provee `createMockAuth()` y

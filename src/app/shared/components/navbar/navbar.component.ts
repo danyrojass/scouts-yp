@@ -22,8 +22,7 @@ export class NavbarComponent {
     isLoggedIn = computed(() => !!this.user());
     private authService = inject(AuthService);
     user = this.authService.user;
-    showRegister = environment.config.showRegister;
-    allowUserImport = environment.config.allowUserImport;
+    showGroups = !environment.config.singleGroupMode;
     isAdmin = computed(() => this.user()?.type === UserType.DIRIGENTE);
 
     toggleMenu(): void {

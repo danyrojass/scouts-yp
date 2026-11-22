@@ -16,24 +16,27 @@ import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {Set} from '../models';
 import {firestoreToSet, setToFirestore} from '../../shared/utils/firestore.utils';
+import {AuthService} from '../../auth/services/auth.service';
 
 @Injectable({providedIn: 'root'})
 export class SetService {
     private firestore = inject(Firestore);
+    private authService = inject(AuthService);
 
-    getSets(): Observable<Set[]> {
+    /** Siempre scoped al grupo del usuario autenticado (modo grupo único). */
+    getSets(groupId?: string): Observable<Set[]> {
+        const targetGroupId = groupId ?? this.authService.user()?.groupId;
         const setsRef = collection(this.firestore, 'sets');
-        return collectionData(setsRef, {idField: 'id'}).pipe(
+        const q = targetGroupId
+            ? query(setsRef, where('group_id', '==', targetGroupId), orderBy('name', 'asc'))
+            : query(setsRef, orderBy('name', 'asc'));
+        return collectionData(q, {idField: 'id'}).pipe(
             map((data: any[]) => data.map(item => ({...firestoreToSet(item), id: item.id})))
         ) as Observable<Set[]>;
     }
 
     getSetsByGroup(groupId: string): Observable<Set[]> {
-        const setsRef = collection(this.firestore, 'sets');
-        const q = query(setsRef, where('group_id', '==', groupId), orderBy('name', 'asc'));
-        return collectionData(q, {idField: 'id'}).pipe(
-            map((data: any[]) => data.map(item => ({...firestoreToSet(item), id: item.id})))
-        ) as Observable<Set[]>;
+        return this.getSets(groupId);
     }
 
     getSetById(id: string | null): Observable<Set | undefined> {

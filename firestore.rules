@@ -1,9 +1,65 @@
 rules_version = '2';
 
+// Despliegue de un único grupo (Scout YP 62).
+// Lectura: cualquier usuario autenticado.
+// Escritura: sólo dirigentes, dentro de su propio grupo.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isDirigente() {
+      return isSignedIn()
+        && (currentUser().type == 'DIRIGENTE' || currentUser().type == 'ADMIN');
+    }
+
+    function belongsToGroup(groupId) {
+      return isSignedIn() && currentUser().group_id == groupId;
+    }
+
+    // El grupo no se gestiona desde la app: se edita desde la consola.
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isDirigente()
+        && request.resource.data.group_id == currentUser().group_id;
+      allow delete: if isDirigente()
+        && resource.data.group_id == currentUser().group_id;
+    }
+
+    match /sets/{setId} {
+      allow read: if isSignedIn();
+      allow create, update: if isDirigente()
+        && request.resource.data.group_id == currentUser().group_id;
+      allow delete: if isDirigente()
+        && resource.data.group_id == currentUser().group_id;
+    }
+
+    match /activities/{activityId} {
+      allow read: if isSignedIn();
+      allow write: if isDirigente();
+    }
+
+    // Las completaciones históricas no tienen group_id: se valida el rol del
+    // dirigente que escribe. En un único grupo no hay cruce entre grupos.
+    match /activity-completion/{completionId} {
+      allow read: if isSignedIn();
+      allow write: if isDirigente();
+    }
+
+    // Cualquier otra colección queda cerrada a escritura.
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow write: if false;
     }
   }
 }

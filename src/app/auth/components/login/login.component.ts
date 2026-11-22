@@ -22,7 +22,7 @@ export class LoginComponent {
 
     isLoading = signal(false);
     errorMessage = signal('');
-    showRegister = environment.config.showRegister;
+    showRegister = !environment.config.singleGroupMode && environment.config.showRegister;
 
     loginForm = this.fb.nonNullable.group({
         email: ['', [Validators.required, Validators.email]],
