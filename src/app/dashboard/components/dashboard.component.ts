@@ -40,13 +40,19 @@ interface LeaderboardEntry {
     totalActivities: number;
 }
 
+interface CompletedSectionItem {
+    setId: string;
+    name: string;
+    completedAt: Date;
+    points: number;
+}
+
 interface CompletedActivityItem {
     level: UserLevel;
     name: string;
     activityId: string;
     completedAt: Date;
-    earnedPoints: number;
-    sections: string[];
+    sections: CompletedSectionItem[];
 }
 
 @Component({
@@ -93,8 +99,9 @@ export class DashboardComponent implements OnInit {
     ));
 
     /**
-     * Actividad reciente agrupada por nivel, con una fila por actividad (no por
-     * completación) y las secciones que la completaron.
+     * Actividad reciente agrupada por nivel. Cada actividad tiene una fila de
+     * encabezado y una fila por sección con SUS puntos (nunca se suman entre
+     * secciones).
      */
     groupedCompletedActivities = computed(() => {
         const stats = this.activityStats();
@@ -112,21 +119,33 @@ export class DashboardComponent implements OnInit {
                     name: activity.name,
                     activityId: activity.id,
                     completedAt: completion.completedAt,
-                    earnedPoints: 0,
                     sections: []
                 };
                 byActivity.set(activity.id, item);
             }
 
-            item.earnedPoints += completion.earnedPoints;
             if (new Date(completion.completedAt) > new Date(item.completedAt)) {
                 item.completedAt = completion.completedAt;
             }
 
             const set = completion.setId ? setsById.get(completion.setId) : undefined;
-            if (set && !item.sections.includes(set.name)) {
-                item.sections.push(set.name);
+            if (!set?.id) continue;
+
+            // Varias completaciones de una misma sección (por integrante) se
+            // consolidan en una sola fila; nunca se mezclan con otras secciones.
+            let section = item.sections.find(s => s.setId === set.id);
+            if (!section) {
+                section = {setId: set.id, name: set.name, completedAt: completion.completedAt, points: 0};
+                item.sections.push(section);
             }
+            section.points += completion.earnedPoints;
+            if (new Date(completion.completedAt) > new Date(section.completedAt)) {
+                section.completedAt = completion.completedAt;
+            }
+        }
+
+        for (const item of byActivity.values()) {
+            item.sections.sort((a, b) => a.name.localeCompare(b.name));
         }
 
         const rows = [...byActivity.values()].sort(

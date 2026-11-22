@@ -42,8 +42,15 @@ dirigente para esa sección (registro que no pertenece a ningún integrante). La
 secciones sin integrantes no cuentan salvo que tengan ese registro histórico.
 
 El contador del dashboard es de **actividades distintas**, no de registros de
-completación: una actividad completada por los 8 miembros de una patrulla cuenta 1,
-no 8. El contador por sección se mide sobre las actividades de su nivel.
+completación: una actividad completada por 3 patrullas cuenta 1, no 3. El contador
+por sección se mide sobre las actividades de su nivel. Cada patrulla aporta **sus
+propios puntos**: en "Actividad Reciente" la actividad es el encabezado y debajo se
+lista una fila por sección con su fecha y sus puntos, sin sumarlos entre secciones.
+
+Los datos históricos de Firestore guardan la rama en `type` (`Seisena`, `Patrulla`,
+`Equipo`, `Clan`) y una sola completación por patrulla y actividad atribuida al
+dirigente. `firestoreToSet` mapea ese `type` a `Set.level` para que el frontend pueda
+relacionar secciones y actividades.
 
 ## Unidades por nivel
 

@@ -180,7 +180,7 @@
                                     <thead>
                                         <tr>
                                             <th>Actividad</th>
-                                            <th>Secciones</th>
+                                            <th>Sección</th>
                                             <th>Fecha</th>
                                             <th>Puntos</th>
                                         </tr>
@@ -196,12 +196,17 @@
                                                 </td>
                                             </tr>
                                             @for (item of group.items.slice(0, 5); track item.activityId) {
-                                                <tr>
-                                                    <td>{{ item.name }}</td>
-                                                    <td>{{ item.sections.join(', ') || '—' }}</td>
-                                                    <td>{{ item.completedAt | date:'dd/MM/yyyy' }}</td>
-                                                    <td><span class="badge badge-success">+{{ item.earnedPoints }}</span></td>
+                                                <tr class="activity-row">
+                                                    <td colspan="4">{{ item.name }}</td>
                                                 </tr>
+                                                @for (section of item.sections; track section.setId) {
+                                                    <tr class="section-row">
+                                                        <td></td>
+                                                        <td>↳ {{ section.name }}</td>
+                                                        <td>{{ section.completedAt | date:'dd/MM/yyyy' }}</td>
+                                                        <td><span class="badge badge-success">+{{ section.points }}</span></td>
+                                                    </tr>
+                                                }
                                             }
                                         }
                                     </tbody>

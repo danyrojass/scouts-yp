@@ -1,3 +1,17 @@
+import {UserLevel} from '../../users/models';
+
+/** Datos históricos: las secciones guardaban `type` en vez de `level`. */
+const LEGACY_LEVEL_BY_UNIT: Record<string, UserLevel> = {
+    seisena: UserLevel.LOBATO,
+    patrulla: UserLevel.SCOUT,
+    equipo: UserLevel.CAMINANTE,
+    clan: UserLevel.ROVER,
+    lobato: UserLevel.LOBATO,
+    scout: UserLevel.SCOUT,
+    caminante: UserLevel.CAMINANTE,
+    rover: UserLevel.ROVER,
+};
+
 function toDate(value: any): Date | null {
     if (!value) return null;
     if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
@@ -47,6 +61,7 @@ export function firestoreToSet(data: any): any {
     return {
         ...data,
         groupId: data.group_id ?? data.groupId ?? null,
+        level: data.level ?? LEGACY_LEVEL_BY_UNIT[String(data.type ?? '').trim().toLowerCase()] ?? null,
         createdAt: toDate(data.created_at ?? data.createdAt),
     };
 }
