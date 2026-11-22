@@ -1,5 +1,16 @@
 # Session State — Scout YP Migration
 
+## Nov 21, 2026 — Corrección de conteo y puntos por patrulla (hotfix del PR #12)
+
+- Los documentos históricos de `sets` en Firestore tienen `type: "Patrulla"|"Seisena"|...`
+  y **no** tienen `level`. Eso hacía que el cálculo por nivel diera 0 actividades por
+  sección y el dashboard mostrara `0/12`. `firestoreToSet` ahora deriva `Set.level`
+  desde `type` (alias Seisena/Patrulla/Equipo/Clan y también Lobato/Scout/Caminante/Rover).
+- "Actividad Reciente" ya no genera una fila agregada con todas las patrullas y sus
+  puntos sumados. Ahora muestra la actividad como encabezado y una fila por sección
+  con **sus** puntos (`↳ Aguara +2`, `↳ Halcón +2`, `↳ Lobo +1`). Las completaciones
+  históricas son una por patrulla y actividad, atribuidas al dirigente.
+
 ## Nov 21, 2026 — Dashboard y completado de actividades (frontend Firestore)
 
 - Nueva regla compartida en `completion-stats.util.ts`: una sección completó una
