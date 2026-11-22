@@ -18,6 +18,13 @@ import {map} from 'rxjs/operators';
 import {Activity, ActivityCompletion} from '../models';
 import {activityToFirestore, firestoreToActivity, firestoreToActivityCompletion} from '../../shared/utils/firestore.utils';
 
+/** Cambios de puntos (y fecha) sobre completaciones ya existentes. */
+export interface CompletionUpdate {
+    id: string;
+    earnedPoints: number;
+    completedAt?: Date;
+}
+
 @Injectable({providedIn: 'root'})
 export class ActivityService {
     private firestore = inject(Firestore);
@@ -92,9 +99,13 @@ export class ActivityService {
         });
     }
 
-    /** Escribe varias completaciones y bajas en un único batch atómico. */
-    async saveCompletions(toCreate: ActivityCompletion[], toDelete: string[] = []): Promise<void> {
-        if (toCreate.length === 0 && toDelete.length === 0) return;
+    /** Escribe altas, modificaciones y bajas en un único batch atómico. */
+    async saveCompletions(
+        toCreate: ActivityCompletion[],
+        toDelete: string[] = [],
+        toUpdate: CompletionUpdate[] = []
+    ): Promise<void> {
+        if (toCreate.length === 0 && toDelete.length === 0 && toUpdate.length === 0) return;
 
         const batch = writeBatch(this.firestore);
         const completionsRef = collection(this.firestore, 'activity-completion');
@@ -108,6 +119,13 @@ export class ActivityService {
                     ? completion.completedAt
                     : new Date(completion.completedAt),
                 earned_points: completion.earnedPoints
+            });
+        }
+
+        for (const update of toUpdate) {
+            batch.update(doc(this.firestore, `activity-completion/${update.id}`), {
+                earned_points: update.earnedPoints,
+                ...(update.completedAt ? {completed_at: update.completedAt} : {})
             });
         }
 

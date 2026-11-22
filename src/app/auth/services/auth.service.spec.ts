@@ -1,5 +1,5 @@
 import {TestBed} from '@angular/core/testing';
-import {AuthService} from './auth.service';
+import {AuthService, FIREBASE_SIGN_IN} from './auth.service';
 import {createMockAuth, createMockFirestore} from '../../testing/mocks/firebase.mocks';
 import {Auth} from '@angular/fire/auth';
 import {Firestore} from '@angular/fire/firestore';
@@ -21,6 +21,11 @@ describe('AuthService', () => {
         TestBed.configureTestingModule({
             providers: [
                 AuthService,
+                {
+                    provide: FIREBASE_SIGN_IN,
+                    useValue: (auth: any, email: string, password: string) =>
+                        mockAuth.signInWithEmailAndPassword(email, password)
+                },
                 {provide: Auth, useValue: mockAuth},
                 {provide: Firestore, useValue: mockFirestore},
                 {provide: NavigationService, useValue: mockNavigation}
@@ -40,7 +45,7 @@ describe('AuthService', () => {
 
     describe('login', () => {
         it('should call signInWithEmailAndPassword', async () => {
-            await service.login('test@test.com', 'password123');
+            await service.login('test@test.com', 'password123').toPromise();
             expect(mockAuth.signInWithEmailAndPassword).toHaveBeenCalledWith('test@test.com', 'password123');
         });
     });
