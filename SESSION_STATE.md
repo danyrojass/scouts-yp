@@ -1,5 +1,14 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Favicon actualizado
+
+- Se reemplazó `public/favicon.svg` por una **flor de lis simple y simétrica**
+  (pétalo central, pétalos laterales, barra y base), elegida entre cuatro
+  alternativas (escudo 62, carpa, flor de lis simple, fogón).
+- Se mantuvieron el verde institucional `#1B5E20`, el dorado `#FFD54F`, el
+  `role="img"` y el `aria-label`. `src/index.html` sigue referenciando el mismo
+  archivo, así que no hubo que tocar el HTML.
+
 ## Nov 22, 2026 — Terminología de ramas en la UI
 
 - Se agregó `branchNameForLevel` en `src/app/shared/utils/level.util.ts`: los
