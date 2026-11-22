@@ -3,13 +3,14 @@ import {Component, computed, inject, signal} from '@angular/core';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
-import {map, of, switchMap} from 'rxjs';
+import {map, of, startWith, switchMap} from 'rxjs';
 import {GroupService} from '../../../groups/services/group.service';
 import {SetService} from '../../../sets/services/set.service';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {User, UserLevel, UserType} from '../../models';
 import {UserService} from '../../services/user.service';
+import {unitNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-user-form',
@@ -26,6 +27,8 @@ export class UserFormComponent {
     userId = signal<string | null>(null);
     userTypes = Object.values(UserType);
     userLevels = Object.values(UserLevel);
+    protected readonly UserType = UserType;
+    protected readonly unitNameForLevel = unitNameForLevel;
     groupId = computed(() => this.userForm.get('groupId')?.value ?? '');
     private fb = inject(FormBuilder);
     userForm: FormGroup = this.fb.group({
@@ -47,6 +50,20 @@ export class UserFormComponent {
             : of([]),
         {initialValue: []}
     );
+    private typeValue = toSignal(
+        this.userForm.get('type')!.valueChanges.pipe(startWith(this.userForm.get('type')!.value)),
+        {initialValue: UserType.BENEFICIARIO as UserType}
+    );
+    private levelValue = toSignal(
+        this.userForm.get('level')!.valueChanges.pipe(startWith(this.userForm.get('level')!.value)),
+        {initialValue: UserLevel.LOBATO as UserLevel}
+    );
+
+    /** Un dirigente no tiene sección; un beneficiario solo ve secciones de su nivel. */
+    availableSets = computed(() => {
+        if (this.typeValue() === UserType.DIRIGENTE) return [];
+        return this.sets().filter(s => s.level === this.levelValue());
+    });
     private router = inject(NavigationService);
     private route = inject(ActivatedRoute);
     user = toSignal(
@@ -72,6 +89,37 @@ export class UserFormComponent {
             }
             this.isLoading.set(false);
         }
+
+        // Un dirigente no pertenece a una sección.
+        this.userForm.get('type')!.valueChanges.subscribe((type: UserType) => {
+            if (type === UserType.DIRIGENTE) {
+                this.userForm.patchValue(
+                    {level: UserLevel.JEFE, setId: null},
+                    {emitEvent: false}
+                );
+            } else if (this.userForm.get('level')!.value === UserLevel.JEFE) {
+                this.userForm.patchValue(
+                    {level: UserLevel.LOBATO, setId: null},
+                    {emitEvent: false}
+                );
+            }
+        });
+
+        // Al cambiar de nivel se limpia la sección si ya no corresponde.
+        this.userForm.get('level')!.valueChanges.subscribe(() => {
+            const setId = this.userForm.get('setId')!.value;
+            if (setId && !this.availableSets().some(s => s.id === setId)) {
+                this.userForm.patchValue({setId: null}, {emitEvent: false});
+            }
+        });
+
+        // La sección es la fuente de verdad del nivel.
+        this.userForm.get('setId')!.valueChanges.subscribe((setId: string | null) => {
+            const set = this.availableSets().find(s => s.id === setId);
+            if (set) {
+                this.userForm.patchValue({level: set.level}, {emitEvent: false});
+            }
+        });
     }
 
     async onSubmit(): Promise<void> {

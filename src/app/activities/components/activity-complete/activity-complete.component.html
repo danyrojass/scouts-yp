@@ -1,6 +1,7 @@
 <div class="container">
     <div class="page-header">
         <h1>Completar Actividad</h1>
+        <p>Seleccioná una actividad para ver los miembros de su sección y registrar sus puntos.</p>
     </div>
 
     <div class="form-container">
@@ -20,15 +21,16 @@
             </app-alert>
         }
 
-        <form (ngSubmit)="onSubmit()" [formGroup]="completionForm">
+        @if (isLoading()) {
+            <div class="loading-container">
+                <app-loading-spinner size="lg"></app-loading-spinner>
+            </div>
+        } @else {
             <div class="form-group">
                 <label class="form-label" for="activityId">Actividad</label>
-                <select
-                        [ngClass]="{'invalid': completionForm.get('activityId')?.invalid && completionForm.get('activityId')?.touched}"
-                        class="form-control"
-                        formControlName="activityId"
-                        id="activityId"
-                >
+                <select class="form-control" id="activityId"
+                        [value]="selectedActivityId()"
+                        (change)="onActivityChange($event)">
                     <option value="">Selecciona una actividad</option>
                     @for (activity of activities(); track activity.id) {
                         <option [value]="activity.id">
@@ -36,94 +38,116 @@
                         </option>
                     }
                 </select>
-                @if (completionForm.get('activityId')?.invalid && completionForm.get('activityId')?.touched) {
-                    <div class="form-error">
-                        <span>Selecciona una actividad</span>
-                    </div>
-                }
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="setId">Sección</label>
-                <select
-                        [ngClass]="{'invalid': completionForm.get('setId')?.invalid && completionForm.get('setId')?.touched}"
-                        class="form-control"
-                        formControlName="setId"
-                        id="setId"
-                        [disabled]="!selectedActivity()"
-                >
-                    <option value="">
-                        {{ selectedActivity() ? 'Selecciona una sección' : 'Primero selecciona una actividad' }}
-                    </option>
-                    @for (set of filteredSets(); track set.id) {
-                        <option [value]="set.id">
-                            {{ set.name }} ({{ set.type }})
-                        </option>
-                    }
-                </select>
-                @if (selectedActivity() && filteredSets().length === 0) {
-                    <div class="form-hint">
-                        <span>No hay secciones de nivel "{{ selectedActivity()?.level }}" en tu grupo</span>
-                    </div>
-                }
-                @if (completionForm.get('setId')?.invalid && completionForm.get('setId')?.touched) {
-                    <div class="form-error">
-                        <span>Selecciona una sección</span>
-                    </div>
-                }
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="earnedPoints">Puntos ganados</label>
-                <input
-                        [ngClass]="{'invalid': completionForm.get('earnedPoints')?.invalid && completionForm.get('earnedPoints')?.touched}"
-                        class="form-control"
-                        formControlName="earnedPoints"
-                        id="earnedPoints"
-                        type="number"
-                        [max]="maxPoints()"
-                        [min]="0"
-                        [disabled]="!selectedActivity()"
-                        (input)="onPointsInput($event)"
-                >
-                @if (selectedActivity()) {
-                    <div class="form-hint">
-                        <span>Máximo: {{ maxPoints() }} pts</span>
-                    </div>
-                }
-                @if (completionForm.get('earnedPoints')?.errors?.['min'] && completionForm.get('earnedPoints')?.touched) {
-                    <div class="form-error">
-                        <span>Los puntos no pueden ser negativos</span>
-                    </div>
-                }
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="completedAt">Fecha de completación</label>
-                <input
-                        [ngClass]="{'invalid': completionForm.get('completedAt')?.invalid && completionForm.get('completedAt')?.touched}"
-                        class="form-control"
-                        formControlName="completedAt"
-                        id="completedAt"
-                        type="date"
-                >
-                @if (completionForm.get('completedAt')?.invalid && completionForm.get('completedAt')?.touched) {
-                    <div class="form-error">
-                        <span>La fecha es requerida</span>
-                    </div>
-                }
-            </div>
-
-            <div class="form-actions">
-                <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
-                <button class="btn btn-primary" type="submit" [disabled]="completionForm.invalid || isLoading()">
-                    @if (isLoading()) {
-                        <app-loading-spinner size="sm"></app-loading-spinner>
+            @if (selectedActivity()) {
+                <div class="form-group">
+                    <label class="form-label">Sección</label>
+                    @if (availableSets().length > 1) {
+                        <div class="section-chips">
+                            @for (set of availableSets(); track set.id) {
+                                <button type="button" class="section-chip"
+                                        [class.active]="set.id === selectedSetId()"
+                                        (click)="selectSet(set.id!)">
+                                    {{ set.name }}
+                                    <small>{{ unitNameForLevel(set.level) }}</small>
+                                </button>
+                            }
+                        </div>
+                    } @else if (selectedSet()) {
+                        <p class="form-hint">
+                            {{ selectedSet()?.name }} ({{ unitNameForLevel(selectedSet()?.level) }})
+                        </p>
                     } @else {
-                        <span>Completar</span>
+                        <p class="form-hint">No hay secciones de nivel "{{ selectedActivity()?.level }}" en tu grupo.</p>
                     }
-                </button>
-            </div>
-        </form>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="completedAt">Fecha de completación</label>
+                    <input class="form-control" id="completedAt" type="date"
+                           [value]="completedAt()"
+                           (input)="completedAt.set($any($event.target).value)" />
+                </div>
+
+                <div class="members-card">
+                    <div class="members-header">
+                        <h2>Miembros de {{ selectedSet()?.name }}</h2>
+                        <span class="badge badge-secondary">Máximo {{ maxPoints() }} pts por miembro</span>
+                    </div>
+
+                    @if (loadingMembers()) {
+                        <div class="loading-container">
+                            <app-loading-spinner size="sm"></app-loading-spinner>
+                        </div>
+                    } @else if (memberRows().length === 0) {
+                        <div class="empty-state">
+                            <p>Esta sección no tiene integrantes registrados.</p>
+                        </div>
+                    } @else {
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Miembro</th>
+                                        <th>Completó</th>
+                                        <th>Puntos</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (row of memberRows(); track row.user.id; let i = $index) {
+                                        <tr [class.row-completed]="row.selected">
+                                            <td>{{ row.user.name }}</td>
+                                            <td>
+                                                <input type="checkbox"
+                                                       [attr.aria-label]="'Completó ' + row.user.name"
+                                                       [checked]="row.selected"
+                                                       (change)="onToggle(i, $any($event.target).checked)" />
+                                            </td>
+                                            <td>
+                                                <input class="form-control points-input" type="number"
+                                                       min="0" [max]="maxPoints()"
+                                                       [attr.aria-label]="'Puntos de ' + row.user.name"
+                                                       [value]="row.points"
+                                                       [disabled]="!row.selected"
+                                                       (input)="onPointsInput(i, $event)" />
+                                            </td>
+                                            <td>
+                                                @if (row.existing) {
+                                                    <span class="badge badge-success">Ya completada</span>
+                                                } @else {
+                                                    <span class="badge badge-secondary">Pendiente</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+
+                <p class="save-summary">
+                    {{ selectedCount() }} de {{ memberRows().length }} miembros seleccionados ·
+                    {{ selectedPointsTotal() }} puntos
+                </p>
+
+                <div class="form-actions">
+                    <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
+                    <button class="btn btn-primary" type="button"
+                            [disabled]="selectedCount() === 0 || saving()"
+                            (click)="onSave()">
+                        @if (saving()) {
+                            <app-loading-spinner size="sm"></app-loading-spinner>
+                        } @else {
+                            <span>Guardar ({{ selectedCount() }})</span>
+                        }
+                    </button>
+                </div>
+            } @else {
+                <p class="form-hint">Elegí una actividad para ver los miembros de su sección.</p>
+            }
+        }
     </div>
 </div>

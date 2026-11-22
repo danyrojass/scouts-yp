@@ -8,6 +8,7 @@ import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
 import {ActivityService} from "../../services/activity.service";
 import {Activity} from "../../models";
+import {groupByLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-list',
@@ -36,6 +37,9 @@ export class ActivityListComponent {
         );
     });
 
+    /** Actividades agrupadas por nivel, mostrando la unidad asociada (Scout → Patrulla). */
+    groupedActivities = computed(() => groupByLevel(this.filteredActivities()));
+
     private authService = inject(AuthService);
     currentUser = this.authService.user;
     private activityService = inject(ActivityService);
@@ -58,6 +62,10 @@ export class ActivityListComponent {
 
     onViewActivity(id: string): void {
         this.router.navigate(['/activities', id]);
+    }
+
+    onCompleteActivity(id: string): void {
+        this.router.navigate(['/activities/complete'], {queryParams: {activityId: id}});
     }
 
     onEditActivity(id: string): void {

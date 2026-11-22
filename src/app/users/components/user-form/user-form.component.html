@@ -80,18 +80,23 @@
                 </select>
             </div>
 
-            <!-- Set (condicional) -->
-            @if (sets().length > 0) {
+            <!-- Set (solo beneficiarios; secciones de su nivel) -->
+            @if (userForm.get('type')?.value !== UserType.DIRIGENTE) {
                 <div class="form-group">
                     <label class="form-label" for="setId">Sección Scout</label>
                     <select class="form-control" formControlName="setId" id="setId">
-                        <option value="">-- Selecciona una sección --</option>
-                        @for (set of sets(); track set.id) {
+                        <option value="">-- Sin sección --</option>
+                        @for (set of availableSets(); track set.id) {
                             <option [value]="set.id">
-                                {{ set.name }} ({{ set.type }})
+                                {{ set.name }} ({{ unitNameForLevel(set.level) }})
                             </option>
                         }
                     </select>
+                    @if (availableSets().length === 0) {
+                        <div class="form-hint">
+                            <span>No hay secciones de nivel "{{ userForm.get('level')?.value }}" en el grupo</span>
+                        </div>
+                    }
                 </div>
             }
 

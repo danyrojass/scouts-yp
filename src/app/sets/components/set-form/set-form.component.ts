@@ -4,9 +4,11 @@ import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} fr
 import {ActivatedRoute} from '@angular/router';
 import {SetService} from '../../services/set.service';
 import {GroupService} from '../../../groups/services/group.service';
-import {Set, SetType} from '../../models';
+import {Set} from '../../models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {UserLevel} from '../../../users/models';
+import {YOUTH_LEVELS, unitNameForLevel} from '../../../shared/utils/level.util';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, filter, map, of, switchMap} from "rxjs";
 
@@ -22,7 +24,8 @@ import {catchError, filter, map, of, switchMap} from "rxjs";
 })
 export class SetFormComponent {
 
-    setTypes: string[] = Object.values(SetType);
+    youthLevels: UserLevel[] = YOUTH_LEVELS;
+    protected readonly unitNameForLevel = unitNameForLevel;
     isLoading = signal(false);
     errorMessage = signal('');
     isEditing = signal(false);
@@ -30,11 +33,11 @@ export class SetFormComponent {
     private fb = inject(FormBuilder);
     setForm: FormGroup<{
         name: FormControl<string>;
-        type: FormControl<SetType>;
+        level: FormControl<UserLevel>;
         groupId: FormControl<string>;
     }> = this.fb.group({
         name: this.fb.control('', {nonNullable: true, validators: [Validators.required]}),
-        type: this.fb.control(SetType.SEISENA, {nonNullable: true, validators: [Validators.required]}),
+        level: this.fb.control(UserLevel.LOBATO, {nonNullable: true, validators: [Validators.required]}),
         groupId: this.fb.control('', {nonNullable: true, validators: [Validators.required]})
     });
     private setService = inject(SetService);

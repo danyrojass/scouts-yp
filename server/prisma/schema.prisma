@@ -1,0 +1,183 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  BENEFICIARIO
+  DIRIGENTE
+}
+
+enum Role {
+  BENEFICIARIO
+  DIRIGENTE
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserLevel {
+  LOBATO
+  SCOUT
+  CAMINANTE
+  ROVER
+  JEFE
+}
+
+/// Un Grupo Scout es el tenant de la aplicación: dueño de todos sus datos.
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  number    String
+  city      String
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users        User[]
+  sets         Set[]
+  activities   Activity[]
+  completions  ActivityCompletion[]
+  payments     Payment[]
+  progressions Progression[]
+
+  @@map("groups")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  name           String
+  dateOfBirth    DateTime?
+  type           UserType  @default(BENEFICIARIO)
+  role           Role      @default(BENEFICIARIO)
+  level          UserLevel @default(LOBATO)
+  isActive       Boolean   @default(true)
+  groupId        String?
+  setId          String?
+  tokenVersion   Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  group          Group?                 @relation(fields: [groupId], references: [id])
+  set            Set?                   @relation(fields: [setId], references: [id])
+  completions    ActivityCompletion[]
+  payments       Payment[]
+  refreshTokens  RefreshToken[]
+  progressions   Progression[]          @relation("UserProgression")
+  approvals      Progression[]          @relation("ProgressionApprover")
+
+  @@index([groupId])
+  @@map("users")
+}
+
+model Set {
+  id        String    @id @default(cuid())
+  name      String
+  /// Rama de la sección (LOBATO/SCOUT/CAMINANTE/ROVER). Define el tipo de unidad.
+  level     UserLevel
+  groupId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group        Group                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  users        User[]
+  completions  ActivityCompletion[]
+
+  @@index([groupId])
+  @@map("sets")
+}
+
+model Activity {
+  id          String    @id @default(cuid())
+  name        String
+  key         String
+  level       UserLevel
+  points      Int
+  description String?
+  groupId     String
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  group        Group                @relation(fields: [groupId], references: [id])
+  completions  ActivityCompletion[]
+
+  @@unique([key, groupId])
+  @@index([groupId])
+  @@map("activities")
+}
+
+model ActivityCompletion {
+  id           String   @id @default(cuid())
+  activityId   String
+  userId       String
+  setId        String?
+  groupId      String
+  completedAt  DateTime @default(now())
+  earnedPoints Int
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+  set      Set?     @relation(fields: [setId], references: [id], onDelete: SetNull)
+  group    Group    @relation(fields: [groupId], references: [id])
+
+  @@unique([activityId, userId])
+  @@index([groupId])
+  @@map("activity_completions")
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  groupId     String
+  amount      Decimal  @db.Decimal(10, 2)
+  currency    String   @default("ARS")
+  concept     String
+  paidAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@index([groupId])
+  @@map("payments")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
+model Progression {
+  id             String    @id @default(cuid())
+  userId         String
+  groupId        String
+  fromLevel      UserLevel
+  toLevel        UserLevel
+  approvedById   String?
+  approvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  user       User  @relation("UserProgression", fields: [userId], references: [id])
+  approvedBy User? @relation("ProgressionApprover", fields: [approvedById], references: [id])
+  group      Group @relation(fields: [groupId], references: [id])
+
+  @@index([groupId])
+  @@map("progressions")
+}
