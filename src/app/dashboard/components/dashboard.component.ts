@@ -13,6 +13,7 @@ import {Group} from '../../groups/models';
 import {Set} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
 import {computeActivityStats} from '../../activities/utils/completion-stats.util';
+import {dayDistanceLabel, featuredActivity as findFeaturedActivity, nextBirthday, progressPercent} from '../utils/dashboard-highlights.util';
 import {groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
@@ -165,6 +166,24 @@ export class DashboardComponent implements OnInit {
     /** Actividades completadas por al menos una sección (no registros de completación). */
     completedActivitiesCount = computed(() => this.activityStats().completedCount);
 
+    completionPercent = computed(() =>
+        progressPercent(this.completedActivitiesCount(), this.activities().length)
+    );
+
+    featuredActivity = computed(() => findFeaturedActivity(this.activities()));
+
+    /** Cumpleaños de los próximos 60 días, como máximo 5. */
+    upcomingBirthdays = computed(() => {
+        const birthdays: {user: User; date: Date; days: number}[] = [];
+        for (const user of this.groupUsers()) {
+            const birthday = nextBirthday(user.dateOfBirth);
+            if (birthday && birthday.days <= 60) {
+                birthdays.push({user, date: birthday.date, days: birthday.days});
+            }
+        }
+        return birthdays.sort((a, b) => a.days - b.days).slice(0, 5);
+    });
+
     leaderboard = computed(() => {
         const stats = this.activityStats();
         const completions = this.completedActivities();
@@ -209,6 +228,7 @@ export class DashboardComponent implements OnInit {
 
     protected readonly UserType = UserType;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly dayDistanceLabel = dayDistanceLabel;
 
     private authService = inject(AuthService);
     private groupService = inject(GroupService);

@@ -1,5 +1,19 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Resumen destacado del dashboard
+
+- `welcome-card`: muestra `nombre · Grupo N` y un acceso directo a
+  `/activities/complete` ("Completar actividad").
+- Indicador de actividades completadas con barra de progreso y porcentaje
+  (`progressPercent`).
+- Nuevas cards: **Próxima actividad** (la futura más cercana; si no hay, la
+  última con etiqueta "Última actividad") y **Próximos cumpleaños** (hasta 5
+  en los próximos 60 días).
+- Lógica extraída a `src/app/dashboard/utils/dashboard-highlights.util.ts` con
+  11 tests nuevos (maneja año bisiesto y fechas vencidas). Total: 42 tests.
+- Datos reales verificados: las 12 actividades están pasadas (última el
+  21/11) y hay un cumpleaños el 28/12.
+
 ## Nov 22, 2026 — Identidad visual y métrica de secciones
 
 - Favicon nuevo: `public/favicon.svg`, flor de lis dorada sobre fondo verde institucional.
