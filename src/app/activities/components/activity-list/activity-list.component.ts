@@ -8,7 +8,7 @@ import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
 import {ActivityService} from "../../services/activity.service";
 import {Activity} from "../../models";
-import {groupByLevel} from '../../../shared/utils/level.util';
+import {branchNameForLevel, groupByLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-list',
@@ -26,6 +26,7 @@ export class ActivityListComponent {
     errorMessage = signal('');
     searchTerm = signal('');
     protected readonly UserType = UserType;
+    protected readonly branchNameForLevel = branchNameForLevel;
     private router = inject(NavigationService);
     filteredActivities = computed(() => {
         const term = this.searchTerm().toLowerCase().trim();
@@ -37,7 +38,7 @@ export class ActivityListComponent {
         );
     });
 
-    /** Actividades agrupadas por nivel, mostrando la unidad asociada (Scout → Patrulla). */
+    /** Actividades agrupadas por rama, mostrando la unidad asociada (Tropa → Patrulla). */
     groupedActivities = computed(() => groupByLevel(this.filteredActivities()));
 
     private authService = inject(AuthService);

@@ -62,7 +62,7 @@
                 <label class="form-label" for="level">Nivel Scout</label>
                 <select class="form-control" formControlName="level" id="level">
                     @for (level of userLevels; track level) {
-                        <option [value]="level">{{ level }}</option>
+                        <option [value]="level">{{ branchNameForLevel(level) }}</option>
                     }
                 </select>
             </div>

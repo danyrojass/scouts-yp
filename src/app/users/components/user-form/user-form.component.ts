@@ -11,7 +11,7 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {AuthService} from '../../../auth/services/auth.service';
 import {User, UserLevel, UserType} from '../../models';
 import {UserService} from '../../services/user.service';
-import {unitNameForLevel} from '../../../shared/utils/level.util';
+import {branchNameForLevel, unitNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-user-form',
@@ -30,6 +30,7 @@ export class UserFormComponent {
     userLevels = Object.values(UserLevel);
     protected readonly UserType = UserType;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
     private fb = inject(FormBuilder);
     userForm: FormGroup = this.fb.group({
         name: ['', [Validators.required]],

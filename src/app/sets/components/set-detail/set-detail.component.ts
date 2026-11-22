@@ -6,7 +6,7 @@ import {UserType} from '../../../users/models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {SetService} from "../../services/set.service";
-import {unitNameForLevel} from "../../../shared/utils/level.util";
+import {branchNameForLevel, unitNameForLevel} from "../../../shared/utils/level.util";
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, switchMap, tap} from "rxjs/operators";
 import {of} from "rxjs";
@@ -26,6 +26,7 @@ export class SetDetailComponent {
     isLoading = signal<boolean>(true);
     protected readonly UserType = UserType;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
     private route = inject(ActivatedRoute);
     private setService = inject(SetService);
     set = toSignal(

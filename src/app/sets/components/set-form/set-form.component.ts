@@ -8,7 +8,7 @@ import {Set} from '../../models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {UserLevel} from '../../../users/models';
-import {YOUTH_LEVELS, unitNameForLevel} from '../../../shared/utils/level.util';
+import {branchNameForLevel, YOUTH_LEVELS, unitNameForLevel} from '../../../shared/utils/level.util';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, filter, map, of, switchMap} from "rxjs";
 
@@ -26,6 +26,7 @@ export class SetFormComponent {
 
     youthLevels: UserLevel[] = YOUTH_LEVELS;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
     isLoading = signal(false);
     errorMessage = signal('');
     isEditing = signal(false);

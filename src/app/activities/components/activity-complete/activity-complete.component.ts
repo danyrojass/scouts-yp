@@ -12,7 +12,7 @@ import {SetService} from '../../../sets/services/set.service';
 import {Set} from '../../../sets/models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
-import {getSetsForLevel, unitNameForLevel} from '../../../shared/utils/level.util';
+import {branchNameForLevel, getSetsForLevel, unitNameForLevel} from '../../../shared/utils/level.util';
 
 interface MemberRow {
     user: User;
@@ -71,6 +71,7 @@ export class ActivityCompleteComponent implements OnInit {
     ));
 
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
 
     private authService = inject(AuthService);
     private activityService = inject(ActivityService);

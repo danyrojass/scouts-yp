@@ -6,6 +6,7 @@ import {UserService} from '../../services/user.service';
 import {AuthService} from '../../../auth/services/auth.service';
 import {UserLevel, UserType} from '../../models';
 import {LoadingSpinnerComponent} from '../../../shared/components';
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 interface ParsedUser {
     name: string;
@@ -36,6 +37,7 @@ export class ImportUsersComponent {
 
     allowedUserTypes = Object.values(UserType);
     allowedUserLevels = Object.values(UserLevel);
+    protected readonly branchNameForLevel = branchNameForLevel;
 
     allowedColumns = [
         'name',

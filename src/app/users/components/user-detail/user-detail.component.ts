@@ -9,6 +9,7 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, switchMap, tap} from "rxjs/operators";
 import {of} from "rxjs";
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-user-detail',
@@ -25,6 +26,7 @@ export class UserDetailComponent {
     errorMessage = signal<string>('');
     isLoading = signal<boolean>(true);
     protected readonly UserType = UserType;
+    protected readonly branchNameForLevel = branchNameForLevel;
     private route = inject(ActivatedRoute);
     private userService = inject(UserService);
     user = toSignal(
