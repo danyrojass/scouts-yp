@@ -1,5 +1,18 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Suite de tests verde y mejoras de usabilidad
+
+- Se creó `src/app/testing/mocks/firebase.mocks.ts`: provee `createMockAuth()` y
+  `createMockFirestore()`, necesarios por los specs de auth, login, register y navbar
+  que no compilaban. El suite completo pasa: **31/31**.
+- `AuthService` inyecta `FIREBASE_SIGN_IN` (token cuyo default es la función modular
+  original). Permite testear `login()` sin cambiar el comportamiento en producción.
+- Completar actividad: botón "Marcar / Desmarcar todos", los puntos de miembros ya
+  completados se pueden editar (batch `update`), Guardar se habilita ante cualquier
+  cambio real y el mensaje distingue guardadas / actualizadas / quitadas.
+- Dashboard: "Actividad Reciente" puede expandirse para ver las 12 actividades
+  (`Mostrar N actividades más` / `Mostrar menos`).
+
 ## Nov 21, 2026 — Corrección de conteo y puntos por patrulla (hotfix del PR #12)
 
 - Los documentos históricos de `sets` en Firestore tienen `type: "Patrulla"|"Seisena"|...`

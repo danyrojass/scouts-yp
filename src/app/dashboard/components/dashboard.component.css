@@ -275,6 +275,10 @@
     padding-top: 0;
 }
 
+.btn-expand-recent {
+    margin-top: var(--space-3);
+}
+
 .group-info {
     margin-bottom: var(--space-4);
 }

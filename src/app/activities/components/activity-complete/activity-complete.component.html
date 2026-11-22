@@ -73,7 +73,16 @@
                 <div class="members-card">
                     <div class="members-header">
                         <h2>Miembros de {{ selectedSet()?.name }}</h2>
-                        <span class="badge badge-secondary">Máximo {{ maxPoints() }} pts por miembro</span>
+                        <div class="members-actions">
+                            <span class="badge badge-secondary">Máximo {{ maxPoints() }} pts por miembro</span>
+                            @if (memberRows().length > 1) {
+                                <button class="btn btn-sm btn-secondary" type="button"
+                                        [attr.aria-label]="allSelected() ? 'Desmarcar todos los miembros' : 'Marcar todos los miembros'"
+                                        (click)="toggleAll()">
+                                    {{ allSelected() ? 'Desmarcar todos' : 'Marcar todos' }}
+                                </button>
+                            }
+                        </div>
                     </div>
 
                     @if (loadingMembers()) {
@@ -131,12 +140,15 @@
                 <p class="save-summary">
                     {{ selectedCount() }} de {{ memberRows().length }} miembros seleccionados ·
                     {{ selectedPointsTotal() }} puntos
+                    @if (!hasChanges() && memberRows().length > 0) {
+                        <span class="save-hint"> · Cambiá los puntos o seleccioná otro miembro para guardar</span>
+                    }
                 </p>
 
                 <div class="form-actions">
                     <button (click)="onCancel()" class="btn btn-secondary" type="button">Cancelar</button>
                     <button class="btn btn-primary" type="button"
-                            [disabled]="selectedCount() === 0 || saving()"
+                            [disabled]="!hasChanges() || saving()"
                             (click)="onSave()">
                         @if (saving()) {
                             <app-loading-spinner size="sm"></app-loading-spinner>

@@ -4,7 +4,7 @@ import {ActivatedRoute} from '@angular/router';
 import {filter, firstValueFrom, take} from 'rxjs';
 
 import {AuthService} from '../../../auth/services/auth.service';
-import {ActivityService} from '../../services/activity.service';
+import {ActivityService, CompletionUpdate} from '../../services/activity.service';
 import {Activity, ActivityCompletion} from '../../models';
 import {User, UserType} from '../../../users/models';
 import {UserService} from '../../../users/services/user.service';
@@ -60,6 +60,15 @@ export class ActivityCompleteComponent implements OnInit {
     selectedPointsTotal = computed(() =>
         this.memberRows().reduce((sum, row) => sum + (row.selected ? row.points : 0), 0)
     );
+    allSelected = computed(() =>
+        this.memberRows().length > 0 && this.memberRows().every(row => row.selected)
+    );
+    /** Alta, baja o cambio de puntos: cualquier cambio habilita Guardar. */
+    hasChanges = computed(() => this.memberRows().some(row =>
+        (row.selected && !row.existing) ||
+        (!row.selected && !!row.existing) ||
+        (row.selected && !!row.existing && row.points !== row.existing.earnedPoints)
+    ));
 
     protected readonly unitNameForLevel = unitNameForLevel;
 
@@ -146,6 +155,11 @@ export class ActivityCompleteComponent implements OnInit {
         );
     }
 
+    toggleAll(): void {
+        const select = !this.allSelected();
+        this.memberRows.update(rows => rows.map(row => ({...row, selected: select})));
+    }
+
     onPointsInput(index: number, event: Event): void {
         const raw = parseInt((event.target as HTMLInputElement).value, 10);
         const max = this.maxPoints();
@@ -165,6 +179,7 @@ export class ActivityCompleteComponent implements OnInit {
         const completedAt = dateValue ? new Date(`${dateValue}T12:00:00`) : new Date();
         const toCreate: ActivityCompletion[] = [];
         const toDelete: string[] = [];
+        const toUpdate: CompletionUpdate[] = [];
 
         for (const row of this.memberRows()) {
             if (!row.user.id) continue;
@@ -177,6 +192,12 @@ export class ActivityCompleteComponent implements OnInit {
                     completedAt,
                     earnedPoints: row.points
                 });
+            } else if (row.selected && row.existing?.id && row.points !== row.existing.earnedPoints) {
+                toUpdate.push({
+                    id: row.existing.id,
+                    earnedPoints: row.points,
+                    completedAt
+                });
             } else if (!row.selected && row.existing?.id && row.existing.userId === row.user.id) {
                 // Sólo se quitan completaciones propias del miembro. Las históricas
                 // (atribuidas a un dirigente) no aparecen en esta lista.
@@ -184,7 +205,7 @@ export class ActivityCompleteComponent implements OnInit {
             }
         }
 
-        if (toCreate.length === 0 && toDelete.length === 0) {
+        if (toCreate.length === 0 && toDelete.length === 0 && toUpdate.length === 0) {
             this.successMessage.set('No hay cambios para guardar');
             return;
         }
@@ -194,11 +215,12 @@ export class ActivityCompleteComponent implements OnInit {
         this.successMessage.set('');
 
         try {
-            await this.activityService.saveCompletions(toCreate, toDelete);
-            const saved = `${toCreate.length} completaciones guardadas`;
-            this.successMessage.set(
-                toDelete.length ? `${saved} y ${toDelete.length} quitadas` : saved
-            );
+            await this.activityService.saveCompletions(toCreate, toDelete, toUpdate);
+            const changes: string[] = [];
+            if (toCreate.length) changes.push(`${toCreate.length} guardadas`);
+            if (toUpdate.length) changes.push(`${toUpdate.length} actualizadas`);
+            if (toDelete.length) changes.push(`${toDelete.length} quitadas`);
+            this.successMessage.set(`${changes.join(', ')} correctamente`);
             await this.loadCompletions();
         } catch (err) {
             console.error('Error al guardar completaciones:', err);

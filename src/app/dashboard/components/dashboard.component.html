@@ -195,7 +195,7 @@
                                                     }
                                                 </td>
                                             </tr>
-                                            @for (item of group.items.slice(0, 5); track item.activityId) {
+                                            @for (item of (showAllRecent() ? group.items : group.items.slice(0, 5)); track item.activityId) {
                                                 <tr class="activity-row">
                                                     <td colspan="4">{{ item.name }}</td>
                                                 </tr>
@@ -211,6 +211,17 @@
                                         }
                                     </tbody>
                                 </table>
+                                @if (recentActivityCount() > 5) {
+                                    <button class="btn btn-sm btn-secondary btn-expand-recent" type="button"
+                                            [attr.aria-expanded]="showAllRecent()"
+                                            (click)="showAllRecent.set(!showAllRecent())">
+                                        @if (showAllRecent()) {
+                                            Mostrar menos
+                                        } @else {
+                                            Mostrar {{ recentActivityCount() - 5 }} actividades más
+                                        }
+                                    </button>
+                                }
                             }
                         </div>
                     </div>

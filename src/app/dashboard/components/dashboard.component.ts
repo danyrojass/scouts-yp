@@ -155,6 +155,11 @@ export class DashboardComponent implements OnInit {
         return groupByLevel(rows);
     });
 
+    showAllRecent = signal(false);
+    recentActivityCount = computed(() =>
+        this.groupedCompletedActivities().reduce((total, group) => total + group.items.length, 0)
+    );
+
     isDirigente = computed(() => this.currentUser()?.type === UserType.DIRIGENTE);
 
     /**

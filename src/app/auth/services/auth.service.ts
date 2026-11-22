@@ -1,4 +1,4 @@
-import {inject, Injectable, signal} from '@angular/core';
+import {inject, Injectable, InjectionToken, signal} from '@angular/core';
 import {Auth, authState, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from '@angular/fire/auth';
 import {doc, docData, Firestore, setDoc} from '@angular/fire/firestore';
 import {from, of, switchMap} from 'rxjs';
@@ -7,10 +7,20 @@ import {User, UserLevel, UserType} from '../../users/models';
 import {NavigationService} from '../../shared/services/navigation.service';
 import {firestoreToUser, userToFirestore} from '../../shared/utils/firestore.utils';
 
+/**
+ * Permite reemplazar la llamada modular de Firebase en los tests. El default
+ * es exactamente la función original, así que el comportamiento no cambia.
+ */
+export const FIREBASE_SIGN_IN = new InjectionToken<typeof signInWithEmailAndPassword>(
+    'FIREBASE_SIGN_IN',
+    {providedIn: 'root', factory: () => signInWithEmailAndPassword}
+);
+
 @Injectable({providedIn: 'root'})
 export class AuthService {
 
     private auth = inject(Auth);
+    private signIn = inject(FIREBASE_SIGN_IN);
     private firestore = inject(Firestore);
     private router = inject(NavigationService);
     private _user = signal<User | null>(null);
@@ -54,7 +64,7 @@ export class AuthService {
     }
 
     login(email: string, password: string) {
-        return from(signInWithEmailAndPassword(this.auth, email, password));
+        return from(this.signIn(this.auth, email, password));
     }
 
     register(email: string, password: string, userData: Partial<User>) {
