@@ -13,13 +13,14 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    // Los datos históricos guardan "Dirigente" (no el enum del backend).
     function isDirigente() {
-      return isSignedIn()
-        && (currentUser().type == 'DIRIGENTE' || currentUser().type == 'ADMIN');
-    }
-
-    function belongsToGroup(groupId) {
-      return isSignedIn() && currentUser().group_id == groupId;
+      return isSignedIn() && (
+        currentUser().type == 'Dirigente' ||
+        currentUser().type == 'DIRIGENTE' ||
+        currentUser().type == 'Admin' ||
+        currentUser().type == 'ADMIN'
+      );
     }
 
     // El grupo no se gestiona desde la app: se edita desde la consola.
