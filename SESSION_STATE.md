@@ -1,5 +1,16 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Iconos de instalación móvil
+
+- El `.ico` (máx. 128px) se veía pixelado al instalar la app en el celular.
+  Se generaron PNGs desde el mismo recorte del logo: `apple-touch-icon.png`
+  (180), `public/icons/icon-192.png`, `icon-512.png` y una variante
+  `icon-maskable-512.png` con el contenido al 72% para la zona segura de Android.
+- `public/manifest.webmanifest`: nombre, `start_url`, `display: standalone`,
+  colores del tema y los tres iconos (`any` 192/512, `maskable` 512).
+- `src/index.html` referencia el manifest, el `apple-touch-icon` y las metas
+  de iOS para modo standalone.
+
 ## Nov 22, 2026 — Favicon con el logo del grupo
 
 - Se generó `public/favicon.ico` a partir de
