@@ -3,6 +3,7 @@ import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import * as XLSX from 'xlsx';
 import {UserService} from '../../services/user.service';
+import {AuthService} from '../../../auth/services/auth.service';
 import {UserLevel, UserType} from '../../models';
 import {LoadingSpinnerComponent} from '../../../shared/components';
 
@@ -12,7 +13,6 @@ interface ParsedUser {
     dateOfBirth: string;
     type: string;
     level: string;
-    groupId: string | null;
     setId: string | null;
 }
 
@@ -25,6 +25,7 @@ interface ParsedUser {
 })
 export class ImportUsersComponent {
     private userService = inject(UserService);
+    private authService = inject(AuthService);
 
     fileSelected: File | null = null;
     previewData: ParsedUser[] = [];
@@ -42,7 +43,6 @@ export class ImportUsersComponent {
         'dateOfBirth',
         'type',
         'level',
-        'groupId',
         'setId'
     ];
 
@@ -104,7 +104,6 @@ export class ImportUsersComponent {
                 const dobIndex = headers.findIndex(h => h.includes('dateofbirth') || h.includes('date'));
                 const typeIndex = headers.findIndex(h => h === 'type');
                 const levelIndex = headers.findIndex(h => h === 'level');
-                const groupIndex = headers.findIndex(h => h === 'group_id' || h === 'groupid');
                 const setIndex = headers.findIndex(h => h === 'set_id' || h === 'setid');
 
                 for (let i = 1; i < jsonData.length; i++) {
@@ -117,7 +116,6 @@ export class ImportUsersComponent {
                         dateOfBirth: dobIndex >= 0 ? String(row[dobIndex] || '') : '',
                         type: typeIndex >= 0 ? this.normalizeField(String(row[typeIndex]), this.allowedUserTypes) : this.allowedUserTypes[0],
                         level: levelIndex >= 0 ? this.normalizeField(String(row[levelIndex]), this.allowedUserLevels) : this.allowedUserLevels[0],
-                        groupId: groupIndex >= 0 && row[groupIndex] ? String(row[groupIndex]).trim() : null,
                         setId: setIndex >= 0 && row[setIndex] ? String(row[setIndex]).trim() : null
                     });
                 }
@@ -158,6 +156,8 @@ export class ImportUsersComponent {
 
         let success = 0;
         let failed = 0;
+        // Modo grupo único: todo usuario importado pertenece al grupo del dirigente.
+        const groupId = this.authService.user()?.groupId ?? null;
 
         for (const user of users) {
             try {
@@ -167,7 +167,7 @@ export class ImportUsersComponent {
                     dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth) : null,
                     type: user.type as UserType,
                     level: user.level as UserLevel,
-                    groupId: user.groupId,
+                    groupId,
                     setId: user.setId,
                     createdAt: new Date()
                 });

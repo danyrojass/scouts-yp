@@ -67,17 +67,10 @@
                 </select>
             </div>
 
-            <!-- Grupo -->
+            <!-- Grupo único: se hereda del dirigente, no se puede cambiar. -->
             <div class="form-group">
-                <label class="form-label" for="groupId">Grupo Scout</label>
-                <select class="form-control" formControlName="groupId" id="groupId">
-                    <option value="">-- Selecciona un grupo --</option>
-                    @for (group of groups(); track group.id) {
-                        <option [value]="group.id">
-                            {{ group.name }} ({{ group.number }})
-                        </option>
-                    }
-                </select>
+                <label class="form-label">Grupo Scout</label>
+                <p class="form-hint">{{ groups()[0]?.name ?? 'Scout YP 62' }} — todos los miembros pertenecen a este grupo.</p>
             </div>
 
             <!-- Set (solo beneficiarios; secciones de su nivel) -->

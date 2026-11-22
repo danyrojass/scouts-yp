@@ -252,22 +252,24 @@ export class DashboardComponent implements OnInit {
 
             this.currentUser.set(user);
 
-            if (!user.groupId) {
-                return;
-            }
+            // Modo grupo único: si un usuario histórico no tiene group_id,
+            // se muestra igual el tablero (la BD sólo contiene este grupo).
+            const groupId = user.groupId;
 
             const [group, users, allSets, allActivities] = await Promise.all([
-                firstValueFrom(this.groupService.getGroupById(user.groupId!)),
-                firstValueFrom(this.userService.getUsersByGroup(user.groupId!)),
+                groupId
+                    ? firstValueFrom(this.groupService.getGroupById(groupId))
+                    : Promise.resolve(null),
+                groupId
+                    ? firstValueFrom(this.userService.getUsersByGroup(groupId))
+                    : firstValueFrom(this.userService.getUsers()),
                 firstValueFrom(this.setService.getSets()),
                 firstValueFrom(this.activityService.getActivities())
             ]);
 
             const isDirigente = user.type === UserType.DIRIGENTE;
-            let filteredSets = allSets;
+            let filteredSets = groupId ? allSets.filter(s => s.groupId === groupId) : allSets;
             let filteredActivities = allActivities;
-
-            filteredSets = filteredSets.filter(s => s.groupId === user.groupId);
             if (!isDirigente) {
                 if (user.setId) {
                     const userSet = filteredSets.find(s => s.id === user.setId);

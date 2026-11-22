@@ -10,11 +10,8 @@ export const routes: Routes = [
         loadComponent: () => import('./auth/components/login/login.component')
             .then(m => m.LoginComponent)
     },
-    {
-        path: 'register',
-        loadComponent: () => import('./auth/components/register/register.component')
-            .then(m => m.RegisterComponent)
-    },
+    // Despliegue de un único grupo: no hay registro público ni alta de grupos.
+    {path: 'register', redirectTo: '/dashboard', pathMatch: 'full'},
 
     // Dashboard
     {
@@ -31,12 +28,7 @@ export const routes: Routes = [
         loadChildren: () => import('./users/users.routes')
             .then(m => m.USER_ROUTES)
     },
-    {
-        path: 'groups',
-        canActivate: [authGuard],
-        loadChildren: () => import('./groups/groups.routes')
-            .then(m => m.GROUP_ROUTES)
-    },
+    {path: 'groups', redirectTo: '/dashboard', pathMatch: 'full'},
     {
         path: 'sets',
         canActivate: [authGuard],

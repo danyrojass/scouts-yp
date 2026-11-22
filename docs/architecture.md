@@ -268,6 +268,13 @@ User ──1:N── RefreshToken
    visible de `UNIT_NAME_BY_LEVEL` y valida que el nivel del usuario coincida con el de
    su sección. La unidad modelada es la **unidad chica** del programa
    (Seisena/Patrulla/Equipo/Clan), no la unidad de rama (Manada/Tropa/Comunidad).
+7. **Frontend en modo grupo único** (implementado). El deploy de Vercel atiende
+   sólo al grupo 62: se conserva `group_id` en los datos para no migrar el histórico,
+   pero se ocultan `/register` y `/groups`, y los servicios filtran sus queries por
+   el `groupId` del usuario autenticado. El backend multi-tenant queda intacto.
+8. **Reglas de Firestore por rol** (implementado). Lectura para autenticados;
+   escritura de usuarios/secciones sólo para dirigentes dentro de su `group_id`.
+   Los grupos (y colecciones nuevas) son de sólo lectura desde la app.
 
 ## 11. Estado y pendientes
 

@@ -1,6 +1,6 @@
 import {CommonModule} from '@angular/common';
-import {Component, computed, inject, signal} from '@angular/core';
-import {toSignal} from '@angular/core/rxjs-interop';
+import {Component, computed, effect, inject, signal} from '@angular/core';
+import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
 import {map, of, startWith, switchMap} from 'rxjs';
@@ -8,6 +8,7 @@ import {GroupService} from '../../../groups/services/group.service';
 import {SetService} from '../../../sets/services/set.service';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
+import {AuthService} from '../../../auth/services/auth.service';
 import {User, UserLevel, UserType} from '../../models';
 import {UserService} from '../../services/user.service';
 import {unitNameForLevel} from '../../../shared/utils/level.util';
@@ -29,7 +30,6 @@ export class UserFormComponent {
     userLevels = Object.values(UserLevel);
     protected readonly UserType = UserType;
     protected readonly unitNameForLevel = unitNameForLevel;
-    groupId = computed(() => this.userForm.get('groupId')?.value ?? '');
     private fb = inject(FormBuilder);
     userForm: FormGroup = this.fb.group({
         name: ['', [Validators.required]],
@@ -42,12 +42,18 @@ export class UserFormComponent {
     });
     private userService = inject(UserService);
     private groupService = inject(GroupService);
+    private authService = inject(AuthService);
     groups = toSignal(this.groupService.getGroups(), {initialValue: []});
     private setService = inject(SetService);
+    // Modo grupo único: las secciones siempre son las del grupo del dirigente.
+    private currentGroupId = computed(() => this.authService.user()?.groupId ?? '');
     sets = toSignal(
-        this.groupId().trim()
-            ? this.setService.getSetsByGroup(this.groupId())
-            : of([]),
+        toObservable(this.currentGroupId).pipe(
+            switchMap(groupId => groupId
+                ? this.setService.getSetsByGroup(groupId)
+                : of([])
+            )
+        ),
         {initialValue: []}
     );
     private typeValue = toSignal(
@@ -81,6 +87,12 @@ export class UserFormComponent {
     );
 
     constructor() {
+        // El grupo nunca se elige: se hereda del dirigente autenticado.
+        effect(() => {
+            const groupId = this.currentGroupId();
+            if (groupId) this.userForm.patchValue({groupId}, {emitEvent: false});
+        });
+
         const currentUser = this.user();
         if (currentUser) {
             this.userForm.patchValue(currentUser);

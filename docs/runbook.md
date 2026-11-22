@@ -64,6 +64,25 @@ deploy. Si `prisma migrate status` marca drift o una migración falló a mitad d
 (por ejemplo por un BOM UTF-8 en el `.sql`), usar `prisma migrate resolve` y volver a
 aplicar sobre una copia limpia.
 
+## Firestore (frontend desplegado en Vercel)
+
+El frontend sigue en Firebase; las reglas viven en `firestore.rules`. Tras cambiarlas:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+En el deploy actual (grupo único) la lectura requiere sesión y la escritura está
+limitada a dirigentes dentro de su `group_id`. `groups` y colecciones nuevas son de
+sólo lectura desde la app: para corregir datos del grupo 62 se usa la consola de
+Firebase. Si un alta falla con `permission-denied`, revisar que el usuario
+autenticado tenga `users/<uid>` con `type: DIRIGENTE` y el mismo `group_id` que el
+documento que intenta crear o editar.
+
+La validación de rol hace un `get()` del usuario por operación; un batch de más de
+~20 escrituras (por ejemplo, completar una actividad con más de 20 miembros) puede
+superar el límite de llamadas `get()` de Firestore. Para esos casos, dividir el batch.
+
 ## Troubleshooting
 
 ### `exec /usr/local/bin/docker-entrypoint.sh: no such file or directory`
