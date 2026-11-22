@@ -114,6 +114,13 @@
     color: var(--neutral-500);
 }
 
+.stat-content .value-text {
+    font-size: 1.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .stat-content .label {
     font-size: 0.8125rem;
     color: var(--neutral-500);
