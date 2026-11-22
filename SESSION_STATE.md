@@ -11,6 +11,8 @@
   en los próximos 60 días).
 - Lógica extraída a `src/app/dashboard/utils/dashboard-highlights.util.ts` con
   11 tests nuevos (maneja año bisiesto y fechas vencidas). Total: 42 tests.
+- `angular.json`: budget de estilos por componente subido a 10/12 kB (el CSS
+  del dashboard quedó en 8.9 kB y el build de producción fallaba en Vercel).
 - Datos reales verificados: las 12 actividades están pasadas (última el
   21/11) y hay un cumpleaños el 28/12.
 
