@@ -1,5 +1,14 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Identidad visual y métrica de secciones
+
+- Favicon nuevo: `public/favicon.svg`, flor de lis dorada sobre fondo verde institucional.
+  `src/index.html` lo referencia, usa `lang="es"`, título `Scout YP 62` y
+  `theme-color` verde. Se verificó que el SVG renderiza en el build.
+- Dashboard: el cuarto indicador ya no muestra los puntos totales del grupo. Para
+  dirigentes muestra **cantidad de secciones**; para beneficiarios, el nombre de
+  **su sección**. La tabla de posiciones sigue mostrando puntos por sección.
+
 ## Nov 22, 2026 — Despliegue en modo grupo único (Scout YP 62)
 
 - El deploy de Vercel es para un solo grupo: se mantiene el modelo `Group`/`groupId`
