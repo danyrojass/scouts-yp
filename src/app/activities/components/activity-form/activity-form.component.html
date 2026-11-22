@@ -57,7 +57,7 @@
                         id="level"
                 >
                     @for (level of levels; track level) {
-                        <option [value]="level">{{ level }}</option>
+                        <option [value]="level">{{ branchNameForLevel(level) }}</option>
                     }
                 </select>
             </div>

@@ -18,6 +18,23 @@ export function unitNameForLevel(level: UserLevel | null | undefined): string | 
     return UNIT_NAME_BY_LEVEL[level] ?? null;
 }
 
+/**
+ * Nombre visible de la rama. Los valores guardados (`Lobato`, `Scout`, ...)
+ * no se migran: acá sólo se traducen a la terminación usada por el grupo.
+ */
+export const BRANCH_NAME_BY_LEVEL: Record<UserLevel, string> = {
+    [UserLevel.LOBATO]: 'Manada',
+    [UserLevel.SCOUT]: 'Tropa',
+    [UserLevel.CAMINANTE]: 'Comunidad',
+    [UserLevel.ROVER]: 'Clan',
+    [UserLevel.JEFE]: 'Jefe',
+};
+
+export function branchNameForLevel(level: UserLevel | string | null | undefined): string | null {
+    if (!level) return null;
+    return BRANCH_NAME_BY_LEVEL[level as UserLevel] ?? null;
+}
+
 /** Niveles juveniles: son los únicos que pueden tener una sección. */
 export const YOUTH_LEVELS: UserLevel[] = [
     UserLevel.LOBATO,

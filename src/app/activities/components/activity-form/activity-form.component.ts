@@ -9,6 +9,7 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {UserLevel} from '../../../users/models';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, filter, map, of, switchMap} from "rxjs";
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-form',
@@ -22,6 +23,7 @@ import {catchError, filter, map, of, switchMap} from "rxjs";
 })
 export class ActivityFormComponent {
     levels: string[] = Object.values(UserLevel);
+    protected readonly branchNameForLevel = branchNameForLevel;
     isLoading = signal(false);
     errorMessage = signal('');
     isEditing = signal(false);

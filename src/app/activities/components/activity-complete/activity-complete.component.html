@@ -34,7 +34,7 @@
                     <option value="">Selecciona una actividad</option>
                     @for (activity of activities(); track activity.id) {
                         <option [value]="activity.id">
-                            {{ activity.name }} — {{ activity.level }} ({{ activity.points }} pts)
+                            {{ activity.name }} — {{ branchNameForLevel(activity.level) }} ({{ activity.points }} pts)
                         </option>
                     }
                 </select>
@@ -59,7 +59,7 @@
                             {{ selectedSet()?.name }} ({{ unitNameForLevel(selectedSet()?.level) }})
                         </p>
                     } @else {
-                        <p class="form-hint">No hay secciones de nivel "{{ selectedActivity()?.level }}" en tu grupo.</p>
+                        <p class="form-hint">No hay secciones de nivel "{{ branchNameForLevel(selectedActivity()?.level) }}" en tu grupo.</p>
                     }
                 </div>
 

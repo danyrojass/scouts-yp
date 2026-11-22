@@ -8,7 +8,7 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, map, of, tap} from "rxjs";
 import {Set} from "../../models";
-import {USER_LEVEL_ORDER, unitNameForLevel} from "../../../shared/utils/level.util";
+import {branchNameForLevel, USER_LEVEL_ORDER, unitNameForLevel} from "../../../shared/utils/level.util";
 
 @Component({
     selector: 'app-set-list',
@@ -34,6 +34,7 @@ export class SetListComponent {
 
     private readonly levelOrder = USER_LEVEL_ORDER;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
 
     filteredSets = computed(() => {
         const term = this.searchTerm().toLowerCase().trim();

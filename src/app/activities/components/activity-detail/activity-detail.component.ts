@@ -12,6 +12,7 @@ import {firstValueFrom, of} from 'rxjs';
 import {ActivityCompletion} from '../../models';
 import {Set} from '../../../sets/models';
 import {SetService} from '../../../sets/services/set.service';
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-activity-detail',
@@ -29,6 +30,7 @@ export class ActivityDetailComponent {
     completions = signal<ActivityCompletion[]>([]);
     setsMap = signal<Map<string, Set>>(new Map());
     protected readonly UserType = UserType;
+    protected readonly branchNameForLevel = branchNameForLevel;
     private route = inject(ActivatedRoute);
     private activityService = inject(ActivityService);
     private setService = inject(SetService);

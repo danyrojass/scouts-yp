@@ -31,7 +31,7 @@ There are two independent axes on every user:
 
 **sets/**
 - id, name, level (UserLevel; la rama de la sección), groupId, createdAt
-- El nombre de la unidad se deriva: Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan
+- `level` guarda los valores históricos; la UI muestra la rama como Manada/Tropa/Comunidad/Clan (`branchNameForLevel`) y la unidad como Seisena/Patrulla/Equipo/Clan (`unitNameForLevel`)
 
 **activities/**
 - id, name, description, key, level (UserLevel), points, createdAt

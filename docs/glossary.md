@@ -54,16 +54,18 @@ relacionar secciones y actividades.
 
 ## Unidades por nivel
 
-La sección guarda la rama (`Set.level`); el nombre visible de la unidad chica se deriva
-de una única constante. No existe un enum `SetType`.
+La sección guarda la rama (`Set.level`) con los valores históricos del enum. En la UI
+la rama se muestra con la terminología del grupo (`branchNameForLevel`) y la unidad
+chica se deriva de una única constante (`unitNameForLevel`). No existe un enum
+`SetType`.
 
-| Nivel (`UserLevel`) | Unidad |
-|---------------------|--------|
-| **LOBATO** | Seisena |
-| **SCOUT** | Patrulla |
-| **CAMINANTE** | Equipo |
-| **ROVER** | Clan |
-| **JEFE** | — (los dirigentes no tienen sección) |
+| Nivel (`UserLevel`) | Rama visible | Unidad chica |
+|---------------------|--------------|--------------|
+| **LOBATO** | Manada | Seisena |
+| **SCOUT** | Tropa | Patrulla |
+| **CAMINANTE** | Comunidad | Equipo |
+| **ROVER** | Clan | Clan |
+| **JEFE** | Jefe | — (los dirigentes no tienen sección) |
 
 ## Auth y seguridad
 

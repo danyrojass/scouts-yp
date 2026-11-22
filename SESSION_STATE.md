@@ -1,5 +1,19 @@
 # Session State — Scout YP Migration
 
+## Nov 22, 2026 — Terminología de ramas en la UI
+
+- Se agregó `branchNameForLevel` en `src/app/shared/utils/level.util.ts`: los
+  valores guardados (`Lobato/Scout/Caminante/Rover`) se muestran como
+  **Manada / Tropa / Comunidad / Clan** en badges, filtros, selects y títulos.
+- Las unidades chicas no cambiaron (`unitNameForLevel`): Seisena / Patrulla /
+  Equipo / Clan. Rover sigue mostrando "Clan" como unidad.
+- Decisión confirmada con el PO: **sólo etiquetas visibles**, sin migrar datos
+  de Firestore ni tocar reglas; el mapeo histórico `type: "Clan" → ROVER` queda
+  intacto.
+- 4 tests nuevos en `level.util.spec.ts`. Docs actualizados: `CLAUDE.md`,
+  `SYSTEM_PROMPT.md`, `docs/architecture.md` (decisión 9), `docs/api-reference.md`,
+  `docs/glossary.md`.
+
 ## Nov 22, 2026 — Resumen destacado del dashboard
 
 - `welcome-card`: muestra `nombre · Grupo N` y un acceso directo a

@@ -19,7 +19,7 @@
                                     {{ currentUser()?.type }}
                                 </span>
                                 <span class="badge" [style.background]="'rgba(255,255,255,0.2)'">
-                                    {{ currentUser()?.level }}
+                                    {{ branchNameForLevel(currentUser()?.level) }}
                                 </span>
                             </div>
                         </div>
@@ -217,7 +217,7 @@
                                         @for (group of groupedCompletedActivities(); track group.level) {
                                             <tr class="level-row">
                                                 <td colspan="4">
-                                                    <span class="level-label">{{ group.level }}</span>
+                                                    <span class="level-label">{{ branchNameForLevel(group.level) }}</span>
                                                     @if (group.unitName) {
                                                         <span class="badge badge-secondary">{{ group.unitName }}</span>
                                                     }
@@ -335,7 +335,7 @@
                                     </div>
                                     <div class="featured-info">
                                         <h3>{{ featured.activity.name }}</h3>
-                                        <p>{{ featured.activity.scheduledAt | date:'dd/MM/yyyy HH:mm' }} · {{ featured.activity.level }}</p>
+                                        <p>{{ featured.activity.scheduledAt | date:'dd/MM/yyyy HH:mm' }} · {{ branchNameForLevel(featured.activity.level) }}</p>
                                     </div>
                                     <span class="badge badge-accent">{{ dayDistanceLabel(featured.days) }}</span>
                                 </a>

@@ -9,6 +9,7 @@ import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, of, tap} from "rxjs";
 import {environment} from '../../../../environments/environment';
 import {RouterLink} from "@angular/router";
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-user-list',
@@ -26,6 +27,7 @@ export class UserListComponent {
     errorMessage = signal('');
     searchTerm = signal('');
     protected readonly UserType = UserType;
+    protected readonly branchNameForLevel = branchNameForLevel;
     allowUserImport = environment.config.allowUserImport;
     private userService = inject(UserService);
     users = toSignal(this.userService.getUsers().pipe(

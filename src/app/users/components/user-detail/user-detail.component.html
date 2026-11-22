@@ -23,7 +23,7 @@
               class="badge">
           {{ user()?.type }}
         </span>
-                <span class="badge badge-secondary">{{ user()?.level }}</span>
+                <span class="badge badge-secondary">{{ branchNameForLevel(user()?.level) }}</span>
             </div>
 
             <div class="detail-body">

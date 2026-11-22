@@ -13,9 +13,11 @@ header `Authorization: Bearer <token>`.
 | `Role` | `BENEFICIARIO`, `DIRIGENTE`, `ADMIN`, `SUPER_ADMIN` |
 | `UserLevel` | `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE` |
 
-`Set.level` usa `UserLevel`: la sección guarda su rama (solo las cuatro juveniles) y
-el nombre visible de la unidad se deriva (Lobato → Seisena, Scout → Patrulla,
-Caminante → Equipo, Rover → Clan). No existe un enum `SetType`.
+`Set.level` usa `UserLevel`: la sección guarda su rama (solo las cuatro juveniles).
+Los valores guardados no se migraron; en la UI la rama se muestra como Manada
+(`LOBATO`), Tropa (`SCOUT`), Comunidad (`CAMINANTE`) y Clan (`ROVER`) mediante
+`branchNameForLevel`. La unidad chica se deriva con `unitNameForLevel` (Seisena,
+Patrulla, Equipo y Clan respectivamente). No existe un enum `SetType`.
 
 ## Respuesta estándar
 

@@ -47,7 +47,7 @@ Referencia completa en `docs/api-reference.md`.
 - **Multi-tenant**: toda entidad tiene `groupId`; los queries SIEMPRE están scoped por el grupo del JWT (middleware `requireGroup`). El `groupId` nunca sale del body/query.
 - **Registro público**: solo crea Grupo + usuario `ADMIN`. El resto de miembros los da de alta un dirigente.
 - **Niveles**: `LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`, `JEFE`
-- **Secciones**: `Set.level` usa `UserLevel` (solo las cuatro ramas juveniles). El nombre visible de la unidad se deriva: Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan. No existe `SetType`; los `DIRIGENTE` no tienen sección.
+- **Secciones**: `Set.level` usa `UserLevel` (solo las cuatro ramas juveniles). Los valores guardados siguen siendo Lobato/Scout/Caminante/Rover, pero en la UI la rama se muestra como **Manada / Tropa / Comunidad / Clan** (`branchNameForLevel`). La unidad chica se deriva con `unitNameForLevel`: Seisena / Patrulla / Equipo / Clan. No existe `SetType`; los `DIRIGENTE` no tienen sección.
 - Grupos: `number` es String (ej. "001")
 
 ## Convenciones del código

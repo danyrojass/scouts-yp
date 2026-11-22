@@ -59,9 +59,10 @@ Los roles son jerárquicos: `BENEFICIARIO < DIRIGENTE < ADMIN < SUPER_ADMIN`.
 
 ### 3.4 Secciones
 
-- Seisena, Patrulla, Equipo y Clan, correspondientes a las ramas Lobato, Scout,
-  Caminante y Rover respectivamente. La sección guarda su `level` y el nombre de la
-  unidad se deriva de una constante (`UNIT_NAME_BY_LEVEL`).
+- Seisena, Patrulla, Equipo y Clan, correspondientes a Manada, Tropa, Comunidad y
+  Clan respectivamente. La sección guarda su `level` con los valores históricos
+  (`LOBATO`, `SCOUT`, `CAMINANTE`, `ROVER`); el nombre visible de la rama se deriva
+  con `branchNameForLevel` y el de la unidad con `unitNameForLevel`.
 - Cada beneficiario pertenece a una sección; las secciones son la unidad de
   agrupamiento para rankings y métricas.
 - Los dirigentes (`JEFE`) no pertenecen a una sección.
@@ -259,15 +260,16 @@ User ──1:N── RefreshToken
 5. **Express 4 + `asyncHandler`**: se mantuvo Express 4 (deps existentes) con wrapper en
    vez de migrar a Express 5.
 6. **Secciones por nivel (`Set.level`), sin `SetType`** (implementado). El tipo de
-   unidad es 1:1 con la rama: Lobato→Seisena, Scout→Patrulla, Caminante→Equipo,
-   Rover→Clan; los dirigentes (`JEFE`) no tienen sección. Por eso `SetType` era un
+   unidad es 1:1 con la rama: Manada→Seisena, Tropa→Patrulla, Comunidad→Equipo,
+   Clan→Clan; los dirigentes (`JEFE`) no tienen sección. Por eso `SetType` era un
    enum derivado que no debía guardarse como dato: duplicaba `User.level` y permitía
    estados inconsistentes (un `LOBATO` en un `CLAN`, o un ascenso aprobado que dejaba
    al usuario en una sección de su rama anterior). La implementación reemplazó
    `Set.type` por `Set.level` (solo las cuatro ramas juveniles), deriva el nombre
-   visible de `UNIT_NAME_BY_LEVEL` y valida que el nivel del usuario coincida con el de
-   su sección. La unidad modelada es la **unidad chica** del programa
-   (Seisena/Patrulla/Equipo/Clan), no la unidad de rama (Manada/Tropa/Comunidad).
+   visible de la rama con `BRANCH_NAME_BY_LEVEL` y el de la unidad con
+   `UNIT_NAME_BY_LEVEL` y valida que el nivel del usuario coincida con el de su
+   sección. La unidad modelada es la **unidad chica** del programa
+   (Seisena/Patrulla/Equipo/Clan), no la rama (Manada/Tropa/Comunidad/Clan).
 7. **Frontend en modo grupo único** (implementado). El deploy de Vercel atiende
    sólo al grupo 62: se conserva `group_id` en los datos para no migrar el histórico,
    pero se ocultan `/register` y `/groups`, y los servicios filtran sus queries por
@@ -275,6 +277,10 @@ User ──1:N── RefreshToken
 8. **Reglas de Firestore por rol** (implementado). Lectura para autenticados;
    escritura de usuarios/secciones sólo para dirigentes dentro de su `group_id`.
    Los grupos (y colecciones nuevas) son de sólo lectura desde la app.
+ 9. **Terminología visible sin migración** (implementado). Los documentos siguen
+    guardando `LOBATO`/`SCOUT`/`CAMINANTE`/`ROVER`; `branchNameForLevel` los muestra
+    como Manada/Tropa/Comunidad/Clan en toda la UI. No se tocan datos ni reglas para
+    preservar el histórico de Firestore.
 
 ## 11. Estado y pendientes
 

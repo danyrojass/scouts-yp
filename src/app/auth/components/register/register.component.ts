@@ -7,6 +7,7 @@ import {GroupService} from '../../../groups/services/group.service';
 import {AlertComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {UserLevel, UserType} from '../../../users/models';
+import {branchNameForLevel} from '../../../shared/utils/level.util';
 
 @Component({
     selector: 'app-register',
@@ -20,6 +21,7 @@ export class RegisterComponent {
     errorMessage = signal('');
     groups = signal<any[]>([]);
     userLevels = signal(Object.values(UserLevel));
+    protected readonly branchNameForLevel = branchNameForLevel;
     userTypes = signal(Object.values(UserType));
     createNewGroup = computed(
         () => this.registerForm.get('groupId')?.value === 'new'

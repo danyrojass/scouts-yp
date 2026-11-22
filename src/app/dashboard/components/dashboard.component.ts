@@ -14,7 +14,7 @@ import {Set} from '../../sets/models';
 import {Activity, ActivityCompletion} from '../../activities/models';
 import {computeActivityStats} from '../../activities/utils/completion-stats.util';
 import {dayDistanceLabel, featuredActivity as findFeaturedActivity, nextBirthday, progressPercent} from '../utils/dashboard-highlights.util';
-import {groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
+import {branchNameForLevel, groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
 import {DatePipe} from "@angular/common";
@@ -209,7 +209,7 @@ export class DashboardComponent implements OnInit {
     });
 
     /**
-     * Tabla de posiciones separada por rama (Seisena, Patrulla, Equipo, Clan)
+     * Tabla de posiciones separada por rama (Manada, Tropa, Comunidad, Clan)
      * para poder comparar contra pares del mismo tipo.
      */
     groupedLeaderboard = computed(() =>
@@ -228,6 +228,7 @@ export class DashboardComponent implements OnInit {
 
     protected readonly UserType = UserType;
     protected readonly unitNameForLevel = unitNameForLevel;
+    protected readonly branchNameForLevel = branchNameForLevel;
     protected readonly dayDistanceLabel = dayDistanceLabel;
 
     private authService = inject(AuthService);

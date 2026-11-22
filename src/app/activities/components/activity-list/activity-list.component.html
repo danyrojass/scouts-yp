@@ -29,7 +29,7 @@
                     @for (group of groupedActivities(); track group.level) {
                         <div class="level-group">
                             <h3 class="level-title">
-                                {{ group.level }}
+                                {{ branchNameForLevel(group.level) }}
                                 @if (group.unitName) {
                                     <span class="badge badge-secondary">{{ group.unitName }}</span>
                                 }
@@ -59,7 +59,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge badge-secondary">{{ activity.level }}</span>
+                                                <span class="badge badge-secondary">{{ branchNameForLevel(activity.level) }}</span>
                                             </td>
                                             <td>
                                                 <div class="points-cell">

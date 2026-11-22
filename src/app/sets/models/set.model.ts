@@ -4,8 +4,9 @@ export interface Set {
     id?: string;
     name: string;
     /**
-     * Rama de la sección (Lobato/Scout/Caminante/Rover). Define el tipo de unidad:
-     * Lobato → Seisena, Scout → Patrulla, Caminante → Equipo, Rover → Clan.
+     * Rama de la sección (valores guardados Lobato/Scout/Caminante/Rover). En la UI
+     * se muestra como Manada/Tropa/Comunidad/Clan; la unidad chica se deriva con
+     * unitNameForLevel: Seisena/Patrulla/Equipo/Clan.
      */
     level: UserLevel;
     groupId: string;
