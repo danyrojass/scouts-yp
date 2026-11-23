@@ -23,10 +23,15 @@ service cloud.firestore {
       );
     }
 
-    // El grupo no se gestiona desde la app: se edita desde la consola.
+    // El grupo no se gestiona desde la app; el dirigente sólo puede cambiar
+    // el año lectivo activo y la lista de años con datos.
     match /groups/{groupId} {
       allow read: if isSignedIn();
-      allow write: if false;
+      allow update: if isDirigente()
+        && groupId == currentUser().group_id
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['active_year', 'years']);
+      allow create, delete: if false;
     }
 
     match /users/{userId} {
@@ -55,6 +60,16 @@ service cloud.firestore {
     match /activity-completion/{completionId} {
       allow read: if isSignedIn();
       allow write: if isDirigente();
+    }
+
+    // Pertenencia por año lectivo: la identidad sigue en users, acá cambian
+    // rol, nivel y sección cada año.
+    match /memberships/{membershipId} {
+      allow read: if isSignedIn();
+      allow create, update: if isDirigente()
+        && request.resource.data.group_id == currentUser().group_id;
+      allow delete: if isDirigente()
+        && resource.data.group_id == currentUser().group_id;
     }
 
     // Cualquier otra colección queda cerrada a escritura.

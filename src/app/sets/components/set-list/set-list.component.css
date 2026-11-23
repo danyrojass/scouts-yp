@@ -2,6 +2,12 @@
     padding: var(--space-5) 0;
 }
 
+.btn-toggle-active {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;

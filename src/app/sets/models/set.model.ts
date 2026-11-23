@@ -11,4 +11,6 @@ export interface Set {
     level: UserLevel;
     groupId: string;
     createdAt: Date;
+    /** False cuando la sección se da de baja; sus datos históricos se conservan. */
+    active?: boolean;
 }

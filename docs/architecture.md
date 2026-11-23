@@ -204,7 +204,8 @@ Respuesta uniforme: `{ success, data }` / `{ success: false, error: { message, d
 
 - Angular 20 standalone, lazy loading por feature, `authGuard`.
 - Features: `auth`, `dashboard`, `users` (list/detail/form/import), `groups`, `sets`,
-  `activities` (list/detail/form/complete).
+  `activities` (list/detail/form/complete), `memberships` (pertenencia anual) y
+  `history` (`/historial`, sólo lectura).
 - Estado con RxJS + Angular Signals.
 - Los services de features (`auth`, `users`, `groups`, `sets`, `activities`) todavía
   usan `@angular/fire` (Fase G pendiente).
@@ -275,12 +276,20 @@ User ──1:N── RefreshToken
    pero se ocultan `/register` y `/groups`, y los servicios filtran sus queries por
    el `groupId` del usuario autenticado. El backend multi-tenant queda intacto.
 8. **Reglas de Firestore por rol** (implementado). Lectura para autenticados;
-   escritura de usuarios/secciones sólo para dirigentes dentro de su `group_id`.
-   Los grupos (y colecciones nuevas) son de sólo lectura desde la app.
+   escritura de usuarios/secciones/memberships sólo para dirigentes dentro de su
+   `group_id`. El documento del grupo sólo admite `update` de `active_year`/`years`.
  9. **Terminología visible sin migración** (implementado). Los documentos siguen
     guardando `LOBATO`/`SCOUT`/`CAMINANTE`/`ROVER`; `branchNameForLevel` los muestra
     como Manada/Tropa/Comunidad/Clan en toda la UI. No se tocan datos ni reglas para
     preservar el histórico de Firestore.
+10. **Año lectivo como eje temporal** (implementado en frontend). La identidad queda
+    en `users`; `memberships` guarda `{user_id, group_id, year, type, level, set_id,
+    active}` por persona y año. Actividades y completaciones llevan `year`; las
+    secciones son estables y se dan de baja con `active: false`. Los documentos viejos
+    sin `year` se interpretan como `2026` (`DEFAULT_YEAR`), con filtro en memoria para
+    no depender de un backfill ni de índices compuestos. `YearService` lee
+    `groups.active_year`, y `Abrir año` copia las pertenencias activas al año siguiente.
+    El histórico es sólo lectura y reutiliza `computeActivityStats` por año.
 
 ## 11. Estado y pendientes
 

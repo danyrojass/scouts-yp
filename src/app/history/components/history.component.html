@@ -1,0 +1,97 @@
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1>Histórico por año lectivo</h1>
+            <p class="subtitle">Actividades, puntos y dirigentes de cada año, sin mezclar las temporadas.</p>
+        </div>
+        <a routerLink="/dashboard" class="btn btn-secondary">Volver al dashboard</a>
+    </div>
+
+    @if (isLoading()) {
+        <div class="loading-container">
+            <app-loading-spinner size="lg"></app-loading-spinner>
+        </div>
+    } @else if (history().length === 0) {
+        <div class="card empty">
+            <p>Todavía no hay años cargados.</p>
+        </div>
+    } @else {
+        <div class="year-list">
+            @for (item of history(); track item.year) {
+                <section class="card year-card" [class.expanded]="expandedYear() === item.year">
+                    <button type="button" class="year-header" (click)="toggleYear(item.year)"
+                            [attr.aria-expanded]="expandedYear() === item.year">
+                        <span class="year-title">Año lectivo {{ item.year }}</span>
+                        <span class="year-badges">
+                            <span class="badge">{{ item.activities.length }} actividades</span>
+                            <span class="badge">{{ item.completedCount }} completadas</span>
+                            <span class="badge badge-accent">{{ item.totalPoints }} pts</span>
+                        </span>
+                        <span class="chevron">{{ expandedYear() === item.year ? '▾' : '▸' }}</span>
+                    </button>
+
+                    @if (expandedYear() === item.year) {
+                        <div class="year-body">
+                            <div class="stats-grid">
+                                <div class="stat">
+                                    <span class="stat-label">Puntos totales</span>
+                                    <span class="stat-value">{{ item.totalPoints }}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Actividades</span>
+                                    <span class="stat-value">{{ item.activities.length }}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Dirigentes / jefes</span>
+                                    <span class="stat-value">{{ item.executiveCount }}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Secciones con puntos</span>
+                                    <span class="stat-value">{{ item.activeSets }}</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-grid">
+                                <div>
+                                    <h2>Secciones destacadas</h2>
+                                    @if (item.topSets.length > 0) {
+                                        <ol class="ranking">
+                                            @for (set of item.topSets; track set.name) {
+                                                <li>
+                                                    <span>{{ set.name }} <small>{{ set.branch }}</small></span>
+                                                    <strong>{{ set.points }} pts</strong>
+                                                </li>
+                                            }
+                                        </ol>
+                                    } @else {
+                                        <p class="muted">Sin puntos registrados.</p>
+                                    }
+                                </div>
+                                <div>
+                                    <h2>Dirigentes y jefes</h2>
+                                    @if (item.members.length > 0) {
+                                        <ul class="members">
+                                            @for (member of item.members; track member.id) {
+                                                <li>
+                                                    <span>{{ member.name }}</span>
+                                                    <small>
+                                                        {{ member.type }}
+                                                        @if (member.setId) {
+                                                            · {{ unitName(member.level) }}
+                                                        }
+                                                    </small>
+                                                </li>
+                                            }
+                                        </ul>
+                                    } @else {
+                                        <p class="muted">Sin datos de roles para este año.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </section>
+            }
+        </div>
+    }
+</div>

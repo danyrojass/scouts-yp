@@ -48,6 +48,14 @@ export class GroupService {
         return updateDoc(groupRef, groupToFirestore(group));
     }
 
+    /** Actualiza sólo el año lectivo activo y la lista de años disponibles. */
+    setActiveYear(id: string, activeYear: number, years: number[]): Promise<void> {
+        return updateDoc(doc(this.firestore, `groups/${id}`), {
+            active_year: activeYear,
+            years
+        });
+    }
+
     deleteGroup(id: string | null) {
         const groupRef = doc(this.firestore, `groups/${id}`);
         return deleteDoc(groupRef);
