@@ -1,5 +1,5 @@
 import {UserLevel} from '../../users/models';
-import {branchNameForLevel, unitNameForLevel, YOUTH_LEVELS} from './level.util';
+import {branchNameForLevel, groupByLevel, unitNameForLevel, YOUTH_LEVELS} from './level.util';
 
 describe('level labels', () => {
     it('muestra las ramas con la terminología del grupo', () => {
@@ -27,5 +27,21 @@ describe('level labels', () => {
         expect(YOUTH_LEVELS).toEqual([
             UserLevel.LOBATO, UserLevel.SCOUT, UserLevel.CAMINANTE, UserLevel.ROVER
         ]);
+    });
+
+    it('agrupa las secciones por rama en orden y omite las ramas vacías', () => {
+        const sets = [
+            {name: 'Clan 1', level: UserLevel.ROVER},
+            {name: 'Seisena 1', level: UserLevel.LOBATO},
+            {name: 'Patrulla 1', level: UserLevel.SCOUT},
+        ];
+
+        const groups = groupByLevel(sets);
+
+        expect(groups.map(g => branchNameForLevel(g.level))).toEqual([
+            'Manada', 'Tropa', 'Clan'
+        ]);
+        expect(groups.map(g => g.unitName)).toEqual(['Seisena', 'Patrulla', 'Clan']);
+        expect(groups[1].items.map(s => s.name)).toEqual(['Patrulla 1']);
     });
 });

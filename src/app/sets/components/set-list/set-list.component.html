@@ -32,47 +32,55 @@
                         <thead>
                             <tr>
                                 <th>Sección</th>
-                                <th>Tipo / Nivel</th>
+                                <th>Unidad</th>
                                 <th>Fecha de creación</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @for (set of filteredSets(); track set.id) {
-                                <tr>
-                                    <td>
-                                        <div class="set-cell">
-                                            <div class="set-avatar">
-                                                {{ set.name.charAt(0) }}
-                                            </div>
-                                            <div class="set-info">
-                                                <h4>{{ set.name }}</h4>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-secondary">{{ unitNameForLevel(set.level) }}</span>
-                                        <span class="badge badge-primary">{{ branchNameForLevel(set.level) }}</span>
-                                    </td>
-                                    <td>{{ set.createdAt | date:'dd/MM/yyyy' }}</td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <button (click)="onViewSet(set.id!)" class="btn-icon" title="Ver">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                            </button>
-                                            @if (currentUser()?.type === UserType.DIRIGENTE) {
-                                                <button (click)="onEditSet(set.id!)" class="btn-icon" title="Editar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                                </button>
-                                                <button (click)="onDeleteSet(set.id!)" class="btn-icon danger" title="Eliminar">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
+                        @for (group of groupedSets(); track group.level) {
+                            <tbody>
+                                <tr class="branch-header">
+                                    <th colspan="4">
+                                        <span class="branch-name">{{ branchNameForLevel(group.level) }}</span>
+                                        <span class="branch-unit">{{ group.unitName }}</span>
+                                        <span class="branch-count">{{ group.items.length }}</span>
+                                    </th>
                                 </tr>
-                            }
-                        </tbody>
+                                @for (set of group.items; track set.id) {
+                                    <tr>
+                                        <td>
+                                            <div class="set-cell">
+                                                <div class="set-avatar">
+                                                    {{ set.name.charAt(0) }}
+                                                </div>
+                                                <div class="set-info">
+                                                    <h4>{{ set.name }}</h4>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">{{ unitNameForLevel(set.level) }}</span>
+                                        </td>
+                                        <td>{{ set.createdAt | date:'dd/MM/yyyy' }}</td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button (click)="onViewSet(set.id!)" class="btn-icon" title="Ver">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                </button>
+                                                @if (currentUser()?.type === UserType.DIRIGENTE) {
+                                                    <button (click)="onEditSet(set.id!)" class="btn-icon" title="Editar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                    </button>
+                                                    <button (click)="onDeleteSet(set.id!)" class="btn-icon danger" title="Eliminar">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        }
                     </table>
                 </div>
             </div>

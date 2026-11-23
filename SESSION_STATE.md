@@ -1,5 +1,15 @@
 # Session State — Scout YP Migration
 
+## Nov 23, 2026 — Lista de secciones agrupada por rama
+
+- `set-list` usa `groupByLevel(filteredSets())` y renderiza un `<tbody>` por rama
+  con encabezado **Manada / Tropa / Comunidad / Clan**, su unidad y cantidad de
+  secciones; debajo van las secciones de esa rama.
+- La columna "Tipo / Nivel" pasó a llamarse "Unidad" y dejó de repetir la rama
+  en cada fila. El buscador sigue filtrando por nombre y por unidad.
+- Sin cambios en datos ni en el orden canónico de niveles. 1 test nuevo en
+  `level.util.spec.ts` (47/47).
+
 ## Nov 22, 2026 — Iconos de instalación móvil
 
 - El `.ico` (máx. 128px) se veía pixelado al instalar la app en el celular.
