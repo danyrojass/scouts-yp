@@ -82,6 +82,20 @@ export class SetListComponent {
         this.router.navigate(['/sets/edit', id]);
     }
 
+    /** Da de baja o reactiva una sección sin borrar su histórico. */
+    onToggleActive(set: Set): void {
+        const nextActive = set.active === false;
+        const action = nextActive ? 'reactivar' : 'dar de baja';
+        if (!confirm(`¿Querés ${action} la sección ${set.name}? Su histórico se conserva.`)) return;
+
+        this.setService.updateSet(set.id!, {active: nextActive})
+            .then(() => console.log('Sección actualizada correctamente'))
+            .catch(err => {
+                console.error('Error al cambiar el estado de la sección:', err);
+                this.errorMessage.set('Ocurrió un error al actualizar la sección');
+            });
+    }
+
     onDeleteSet(id: string): void {
         if (!confirm('¿Estás seguro de borrar esta sección?')) return;
 

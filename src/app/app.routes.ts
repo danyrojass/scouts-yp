@@ -20,6 +20,12 @@ export const routes: Routes = [
         loadComponent: () => import('./dashboard/components/dashboard.component')
             .then(m => m.DashboardComponent)
     },
+    {
+        path: 'historial',
+        canActivate: [authGuard],
+        loadComponent: () => import('./history/components/history.component')
+            .then(m => m.HistoryComponent)
+    },
 
     // Features (lazy load standalone routes)
     {

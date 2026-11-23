@@ -8,4 +8,6 @@ export interface Activity {
     points: number;
     createdAt: Date;
     scheduledAt?: Date;
+    /** Año lectivo al que pertenece la actividad. */
+    year?: number;
 }

@@ -19,6 +19,22 @@ Los valores guardados no se migraron; en la UI la rama se muestra como Manada
 `branchNameForLevel`. La unidad chica se deriva con `unitNameForLevel` (Seisena,
 Patrulla, Equipo y Clan respectivamente). No existe un enum `SetType`.
 
+## Contrato de Firestore (frontend actual, Fase G pendiente)
+
+Hasta que el frontend migre a la API, las colecciones que consume `@angular/fire` son:
+
+| Colección | Campos relevantes | Notas |
+|-----------|-------------------|-------|
+| `groups` | `name`, `number`, `city`, `created_at`, `active_year`, `years` | `active_year` es el año del dashboard; `years` alimenta `/historial`. |
+| `users` | `name`, `email`, `date_of_birth`, `group_id`, `created_at` | Identidad. El rol/nivel/sección por año está en `memberships`. |
+| `memberships` | `user_id`, `group_id`, `year`, `type`, `level`, `set_id`, `active`, `created_at` | Uno por persona y año. |
+| `sets` | `name`, `type`/`level`, `group_id`, `created_at`, `active` | `active: false` da de baja la sección sin borrar su histórico. |
+| `activities` | `name`, `key`, `level`, `points`, `created_at`, `scheduled_at`, `year` | `getActivities(year?)` filtra por año; sin año usa el activo. |
+| `activity-completion` | `activity_id`, `set_id`, `user_id`, `completed_at`, `earned_points`, `year` | Los puntos quedan separados por año. |
+
+Los documentos históricos sin `year` se mapean a `2026` (`DEFAULT_YEAR`). El filtro
+por año se aplica en memoria para no exigir backfill ni índices compuestos.
+
 ## Respuesta estándar
 
 Éxito: `{ "success": true, "data": ... }`

@@ -15,6 +15,9 @@ import {Activity, ActivityCompletion} from '../../activities/models';
 import {computeActivityStats} from '../../activities/utils/completion-stats.util';
 import {dayDistanceLabel, featuredActivity as findFeaturedActivity, nextBirthday, progressPercent} from '../utils/dashboard-highlights.util';
 import {branchNameForLevel, groupByLevel, unitNameForLevel, YOUTH_LEVELS} from '../../shared/utils/level.util';
+import {DEFAULT_YEAR, yearFor, usersForYear} from '../../shared/utils/year.util';
+import {YearService} from '../../shared/services/year.service';
+import {MembershipService} from '../../memberships/services/membership.service';
 import {LoadingSpinnerComponent} from "../../shared/components";
 import {RouterLink} from "@angular/router";
 import {DatePipe} from "@angular/common";
@@ -70,6 +73,8 @@ interface CompletedActivityItem {
 export class DashboardComponent implements OnInit {
 
     currentUser = signal<User | null>(null);
+    activeYear = signal(DEFAULT_YEAR);
+    yearRole = signal<UserType | null>(null);
     userGroup = signal<Group | null>(null);
     userSet = signal<Set | null>(null);
     groupUsers = signal<User[]>([]);
@@ -236,6 +241,8 @@ export class DashboardComponent implements OnInit {
     private userService = inject(UserService);
     private setService = inject(SetService);
     private activityService = inject(ActivityService);
+    private membershipService = inject(MembershipService);
+    protected readonly yearService = inject(YearService);
 
     async ngOnInit(): Promise<void> {
         try {
@@ -252,46 +259,62 @@ export class DashboardComponent implements OnInit {
             // se muestra igual el tablero (la BD sólo contiene este grupo).
             const groupId = user.groupId;
 
-            const [group, users, allSets, allActivities] = await Promise.all([
-                groupId
-                    ? firstValueFrom(this.groupService.getGroupById(groupId))
-                    : Promise.resolve(null),
+            const group = groupId
+                ? await firstValueFrom(this.groupService.getGroupById(groupId))
+                : undefined;
+            const year = yearFor(group?.activeYear ?? this.yearService.activeYear());
+            this.activeYear.set(year);
+
+            const [users, allSets, allActivities, memberships] = await Promise.all([
                 groupId
                     ? firstValueFrom(this.userService.getUsersByGroup(groupId))
                     : firstValueFrom(this.userService.getUsers()),
                 firstValueFrom(this.setService.getSets()),
-                firstValueFrom(this.activityService.getActivities())
+                firstValueFrom(this.activityService.getActivities(year)),
+                groupId
+                    ? firstValueFrom(this.membershipService.getMemberships(groupId, year))
+                    : Promise.resolve([])
             ]);
 
-            const isDirigente = user.type === UserType.DIRIGENTE;
-            let filteredSets = groupId ? allSets.filter(s => s.groupId === groupId) : allSets;
+            // Rol, nivel y sección del año lectivo que se está mostrando.
+            const allYearUsers = usersForYear(users, memberships, year);
+            const yearUsers = memberships.length > 0
+                ? allYearUsers.filter(u => memberships.some(
+                    m => m.userId === u.id && m.active !== false))
+                : allYearUsers;
+            const yearUser = yearUsers.find(u => u.id === user.id) ?? user;
+
+            const isDirigente = yearUser.type === UserType.DIRIGENTE;
+            this.yearRole.set(yearUser.type ?? null);
+            let filteredSets = allSets.filter(s => s.active !== false);
+            if (groupId) filteredSets = filteredSets.filter(s => s.groupId === groupId);
             let filteredActivities = allActivities;
             if (!isDirigente) {
-                if (user.setId) {
-                    const userSet = filteredSets.find(s => s.id === user.setId);
+                if (yearUser.setId) {
+                    const userSet = filteredSets.find(s => s.id === yearUser.setId);
                     if (userSet) {
                         filteredSets = filteredSets.filter(s => s.level === userSet.level);
                     }
                 }
-                filteredActivities = filteredActivities.filter(a => a.level === user.level);
+                filteredActivities = filteredActivities.filter(a => a.level === yearUser.level);
             }
 
             const setIds = filteredSets.map(s => s.id!).filter(Boolean);
             const completions = setIds.length > 0
-                ? await firstValueFrom(this.activityService.getCompletionsBySetIds(setIds))
+                ? await firstValueFrom(this.activityService.getCompletionsBySetIds(setIds, year))
                 : [];
 
             const results: DashboardData = {
                 group: group ?? undefined,
-                users,
+                users: yearUsers,
                 sets: filteredSets,
                 activities: filteredActivities,
                 completions,
                 userSet: undefined
             };
 
-            if (user.setId) {
-                results.userSet = await firstValueFrom(this.setService.getSetById(user.setId)) ?? undefined;
+            if (yearUser.setId) {
+                results.userSet = await firstValueFrom(this.setService.getSetById(yearUser.setId)) ?? undefined;
             }
 
             this.userGroup.set(results.group ?? null);
@@ -304,6 +327,22 @@ export class DashboardComponent implements OnInit {
             }
         } catch (err) {
             console.error('Error loading dashboard data:', err);
+        }
+    }
+
+    /** Abre el año lectivo siguiente copiando las pertenencias activas. */
+    async onOpenNextYear(): Promise<void> {
+        const next = this.activeYear() + 1;
+        if (!confirm(`¿Abrir el año lectivo ${next}? Se copiarán los integrantes activos y las actividades empezarán vacías.`)) {
+            return;
+        }
+        try {
+            const year = await this.yearService.openNextYear();
+            this.activeYear.set(year);
+            await this.ngOnInit();
+        } catch (err) {
+            console.error('Error al abrir el año lectivo:', err);
+            alert('No se pudo abrir el año lectivo. Revisá los permisos y volvé a intentar.');
         }
     }
 }

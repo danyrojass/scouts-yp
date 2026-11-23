@@ -13,10 +13,19 @@
                             @if (userGroup(); as group) {
                                 <p class="welcome-group">{{ group.name }} · Grupo {{ group.number }}</p>
                             }
+                            <div class="welcome-year">
+                                <span class="badge badge-accent">Año lectivo {{ activeYear() }}</span>
+                                <a routerLink="/historial" class="btn btn-secondary">Ver histórico</a>
+                                @if (yearRole() === UserType.DIRIGENTE) {
+                                    <button type="button" class="btn btn-secondary" (click)="onOpenNextYear()">
+                                        Abrir {{ activeYear() + 1 }}
+                                    </button>
+                                }
+                            </div>
                             <div class="welcome-meta">
-                                <span class="badge" [class.badge-accent]="currentUser()?.type === UserType.DIRIGENTE"
-                                      [style.background]="currentUser()?.type === UserType.DIRIGENTE ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)'">
-                                    {{ currentUser()?.type }}
+                                <span class="badge" [class.badge-accent]="yearRole() === UserType.DIRIGENTE"
+                                      [style.background]="yearRole() === UserType.DIRIGENTE ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)'">
+                                    {{ yearRole() }}
                                 </span>
                                 <span class="badge" [style.background]="'rgba(255,255,255,0.2)'">
                                     {{ branchNameForLevel(currentUser()?.level) }}
@@ -176,7 +185,7 @@
                                 </div>
                                 @if (userSet()) {
                                     <div class="user-set">
-                                        @if (currentUser()?.type === UserType.DIRIGENTE) {
+                                        @if (yearRole() === UserType.DIRIGENTE) {
                                             <div class="label">Secciones</div>
                                             <div class="value">{{ groupSets().length === 1 ? '1 sección' : groupSets().length + ' secciones' }}</div>
                                         } @else {

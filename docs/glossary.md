@@ -26,13 +26,33 @@ Términos del dominio scout y de la aplicación.
 | Término | Descripción |
 |---------|-------------|
 | **Group** | Grupo scout y **tenant** de la aplicación. Tiene `number` (String, ej. "001"), `city`, `slug` único e `isActive`. Todo query se scopea por su `id` (`groupId`). Se da de baja lógicamente. |
-| **User** | Usuario (beneficiario o dirigente). Pertenece a un solo grupo (`groupId`), salvo `SUPER_ADMIN`. Soft delete vía `isActive=false`. |
-| **Set** | Sección/unidad chica dentro de un grupo. Guarda su `level` (`LOBATO` \| `SCOUT` \| `CAMINANTE` \| `ROVER`); los dirigentes (`JEFE`) no tienen sección. |
-| **Activity** | Actividad con `key` único por organización, nivel y puntos. |
-| **ActivityCompletion** | Registro de actividad completada por un usuario (unique activity+user). |
+| **User** | Identidad de una persona (nombre, email, cumpleaños, `groupId`). El rol, el nivel y la sección varian por año y viven en `Membership`. |
+| **Membership** | Pertenencia anual de una persona a un grupo: `{user_id, group_id, year, type, level, set_id, active}`. Un registro por persona y año lectivo. |
+| **Set** | Sección/unidad chica dentro de un grupo. Guarda su `level` (`LOBATO` \| `SCOUT` \| `CAMINANTE` \| `ROVER`); los dirigentes (`JEFE`) no tienen sección. Tiene `active` para dar de baja una patrulla/seisena sin borrar su histórico. |
+| **Activity** | Actividad con `key` único por organización, nivel, puntos y `year`. |
+| **ActivityCompletion** | Registro de actividad completada por un usuario (o por una sección), con `year` para que los puntos no se mezclen entre años. |
 | **Payment** | Pago/cuota de un beneficiario (monto Decimal, concepto, moneda). |
 | **Progression** | Progresión de un beneficiario entre niveles, con aprobación de un dirigente. |
 | **RefreshToken** | Token de refresco con rotación y revocación. |
+
+## Año lectivo e histórico
+
+El **año lectivo** es la unidad temporal de la temporada scout. El grupo guarda
+`active_year` (el año que muestra el dashboard) y `years` (los años con datos).
+Todo lo que cambia por temporada se etiqueta con `year`: actividades,
+completaciones y pertenencias (`memberships`). Las secciones son estables en el
+tiempo y sólo se marcan `active: false` cuando se dan de baja.
+
+Los documentos históricos que no tenían `year` se interpretan como `2026`
+(`DEFAULT_YEAR` en `year.util.ts`), así que no hizo falta migrarlos para que el
+dashboard siga mostrando la temporada actual. El botón **Abrir año** del dashboard
+copia las pertenencias activas al año siguiente y cambia el año activo del grupo;
+las actividades y los puntos del nuevo año arrancan vacíos.
+
+La pantalla `/historial` recorre los años del grupo y muestra, por temporada,
+actividades, puntos, secciones destacadas y dirigentes/jefes de ese año. Es de
+sólo lectura: usa los mismos cálculos que el dashboard pero con el año de cada
+bloque.
 
 ## Actividades completadas
 

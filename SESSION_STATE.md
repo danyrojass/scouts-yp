@@ -1,5 +1,33 @@
 # Session State — Scout YP Migration
 
+## Nov 23, 2026 — Año lectivo e histórico (rama `feat/school-year`, SIN merge)
+
+- Definiciones confirmadas con el PO: datos actuales = **2026**; las secciones se
+  mantienen entre años pero pueden darse de baja; una persona conserva su login y
+  cambia de rol/nivel/sección por año; el dirigente abre el año siguiente desde la app.
+- Modelo: `groups.active_year` + `groups.years`; nueva colección `memberships`
+  (`user_id`, `group_id`, `year`, `type`, `level`, `set_id`, `active`); `year` en
+  actividades y completaciones; `active` en secciones.
+- Los documentos viejos sin `year` se interpretan como 2026 (`DEFAULT_YEAR`). El
+  filtro es **en memoria** (`ActivityService.inYear`) para no exigir backfill ni
+  índices compuestos; por eso el deploy funciona sin tocar Firestore.
+- `YearService` lee el grupo, expone `activeYear`/`years` con signals y `openNextYear()`
+  copia las membresías activas al año siguiente. El dashboard muestra la badge
+  "Año lectivo" y el botón "Abrir <año+1>" (sólo dirigentes).
+- Nueva ruta `/historial` (sólo lectura): por año muestra actividades, puntos,
+  completadas, dirigentes/jefes y secciones destacadas con `computeActivityStats`.
+- `set-list` permite **dar de baja / reactivar** secciones con `active: false`.
+- `firestore.rules`: `groups` sólo `update` de `active_year`/`years`; `memberships`
+  con la misma política de rol/grupo. **Desplegado** con
+  `firebase deploy --only firestore:rules --project scout-app-7b912`.
+- Script `scripts/backfill-school-year.mjs` con dry-run por defecto y `--apply`.
+  **Ejecutado con `--apply`** con OK del PO: 58 escrituras (2 grupo, 1 membership,
+  7 secciones, 12 actividades, 36 completaciones). Un dry-run posterior muestra
+  0 escrituras pendientes (idempotente).
+- Tests: 57/57. Build de producción OK (warning cosmético de bundle > 500 kB).
+- Docs actualizados: `SESSION_STATE.md`, `docs/glossary.md`,
+  `docs/architecture.md`, `docs/api-reference.md`, `docs/runbook.md`.
+
 ## Nov 23, 2026 — Lista de secciones agrupada por rama
 
 - `set-list` usa `groupByLevel(filteredSets())` y renderiza un `<tbody>` por rama

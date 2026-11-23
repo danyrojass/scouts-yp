@@ -73,11 +73,24 @@ firebase deploy --only firestore:rules
 ```
 
 En el deploy actual (grupo único) la lectura requiere sesión y la escritura está
-limitada a dirigentes dentro de su `group_id`. `groups` y colecciones nuevas son de
-sólo lectura desde la app: para corregir datos del grupo 62 se usa la consola de
-Firebase. Si un alta falla con `permission-denied`, revisar que el usuario
-autenticado tenga `users/<uid>` con `type: DIRIGENTE` y el mismo `group_id` que el
-documento que intenta crear o editar.
+limitada a dirigentes dentro de su `group_id`. `groups` sólo admite `update` de
+`active_year`/`years`, y `memberships` se escribe con el mismo criterio que
+usuarios y secciones. Si un alta falla con `permission-denied`, revisar que el
+usuario autenticado tenga `users/<uid>` con `type: DIRIGENTE` y el mismo `group_id`
+que el documento que intenta crear o editar.
+
+### Año lectivo y backfill opcional
+
+El frontend funciona sin tocar los datos: los documentos viejos sin `year` se leen
+como 2026. Para etiquetarlos y crear las memberships iniciales:
+
+```bash
+node scripts/backfill-school-year.mjs            # dry-run: sólo muestra el plan
+node scripts/backfill-school-year.mjs --apply    # escribe en Firestore
+```
+
+El script es idempotente y usa `service-account.json` (gitignored). Antes de correrlo
+con `--apply`, verificar el proyecto en `.firebaserc` y revisar el resumen del dry-run.
 
 La validación de rol hace un `get()` del usuario por operación; un batch de más de
 ~20 escrituras (por ejemplo, completar una actividad con más de 20 miembros) puede
