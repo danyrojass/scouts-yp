@@ -18,9 +18,12 @@
   completadas, dirigentes/jefes y secciones destacadas con `computeActivityStats`.
 - `set-list` permite **dar de baja / reactivar** secciones con `active: false`.
 - `firestore.rules`: `groups` sólo `update` de `active_year`/`years`; `memberships`
-  con la misma política de rol/grupo. **Pendiente de deploy** (no se desplegó).
+  con la misma política de rol/grupo. **Desplegado** con
+  `firebase deploy --only firestore:rules --project scout-app-7b912`.
 - Script `scripts/backfill-school-year.mjs` con dry-run por defecto y `--apply`.
-  **NO EJECUTADO con `--apply`**: falta el OK del PO para escribir en Firestore.
+  **Ejecutado con `--apply`** con OK del PO: 58 escrituras (2 grupo, 1 membership,
+  7 secciones, 12 actividades, 36 completaciones). Un dry-run posterior muestra
+  0 escrituras pendientes (idempotente).
 - Tests: 57/57. Build de producción OK (warning cosmético de bundle > 500 kB).
 - Docs actualizados: `SESSION_STATE.md`, `docs/glossary.md`,
   `docs/architecture.md`, `docs/api-reference.md`, `docs/runbook.md`.
