@@ -8,7 +8,7 @@ import {NavigationService} from '../../../shared/services/navigation.service';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, map, of, tap} from "rxjs";
 import {Set} from "../../models";
-import {branchNameForLevel, USER_LEVEL_ORDER, unitNameForLevel} from "../../../shared/utils/level.util";
+import {branchNameForLevel, groupByLevel, USER_LEVEL_ORDER, unitNameForLevel} from "../../../shared/utils/level.util";
 
 @Component({
     selector: 'app-set-list',
@@ -44,6 +44,9 @@ export class SetListComponent {
             (unitNameForLevel(s.level)?.toLowerCase().includes(term) ?? false)
         );
     });
+
+    /** Secciones agrupadas por rama, en el orden canónico (Manada → Clan). */
+    groupedSets = computed(() => groupByLevel(this.filteredSets()));
 
     sets = toSignal(
         this.setService.getSets().pipe(
