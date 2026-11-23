@@ -54,7 +54,9 @@ export class SetService {
 
     createSet(set: Set) {
         const setsRef = collection(this.firestore, 'sets');
-        return addDoc(setsRef, setToFirestore(set));
+        // Modo grupo único: el grupo siempre es el del dirigente autenticado.
+        const groupId = this.authService.user()?.groupId ?? set.groupId;
+        return addDoc(setsRef, setToFirestore({...set, groupId}));
     }
 
     updateSet(id: string, set: Partial<Set>) {

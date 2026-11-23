@@ -73,7 +73,9 @@ export class UserService {
 
     createUser(user: Partial<User>) {
         const usersRef = collection(this.firestore, 'users');
-        return addDoc(usersRef, userToFirestore(user));
+        // Modo grupo único: el grupo siempre es el del dirigente autenticado.
+        const groupId = this.authService.user()?.groupId ?? user.groupId;
+        return addDoc(usersRef, userToFirestore({...user, groupId}));
     }
 
     updateUser(id: string, user: Partial<User>) {

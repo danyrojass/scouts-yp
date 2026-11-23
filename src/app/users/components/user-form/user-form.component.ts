@@ -1,11 +1,11 @@
 import {CommonModule} from '@angular/common';
-import {Component, computed, effect, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {toObservable, toSignal} from '@angular/core/rxjs-interop';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
 import {map, of, startWith, switchMap} from 'rxjs';
-import {GroupService} from '../../../groups/services/group.service';
 import {SetService} from '../../../sets/services/set.service';
+import {MembershipService} from '../../../memberships/services/membership.service';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
 import {AuthService} from '../../../auth/services/auth.service';
@@ -38,13 +38,11 @@ export class UserFormComponent {
         dateOfBirth: ['', [Validators.required]],
         type: [UserType.BENEFICIARIO, [Validators.required]],
         level: [UserLevel.LOBATO, [Validators.required]],
-        groupId: [null],
         setId: [null]
     });
     private userService = inject(UserService);
-    private groupService = inject(GroupService);
+    private membershipService = inject(MembershipService);
     private authService = inject(AuthService);
-    groups = toSignal(this.groupService.getGroups(), {initialValue: []});
     private setService = inject(SetService);
     // Modo grupo único: las secciones siempre son las del grupo del dirigente.
     private currentGroupId = computed(() => this.authService.user()?.groupId ?? '');
@@ -88,18 +86,9 @@ export class UserFormComponent {
     );
 
     constructor() {
-        // El grupo nunca se elige: se hereda del dirigente autenticado.
-        effect(() => {
-            const groupId = this.currentGroupId();
-            if (groupId) this.userForm.patchValue({groupId}, {emitEvent: false});
-        });
-
         const currentUser = this.user();
         if (currentUser) {
             this.userForm.patchValue(currentUser);
-            if (currentUser.groupId) {
-                this.userForm.patchValue({groupId: currentUser.groupId});
-            }
             this.isLoading.set(false);
         }
 
@@ -143,15 +132,23 @@ export class UserFormComponent {
 
         const userData: Partial<User> = {
             ...this.userForm.getRawValue(),
+            // Modo grupo único: el grupo nunca se elige en el formulario.
+            groupId: this.currentGroupId(),
             dateOfBirth: new Date(this.userForm.value.dateOfBirth)
         };
 
         try {
+            let userId: string;
             if (this.isEditing() && this.userId()) {
-                await this.userService.updateUser(this.userId()!, userData);
+                userId = this.userId()!;
+                await this.userService.updateUser(userId, userData);
             } else {
-                await this.userService.createUser(userData);
+                const ref = await this.userService.createUser(userData);
+                userId = ref.id;
             }
+
+            // Rol, nivel y sección son datos del año lectivo activo.
+            await this.membershipService.ensureMembership({...userData, id: userId} as User);
             this.router.navigate(['/users']);
         } catch (error) {
             console.error(error);

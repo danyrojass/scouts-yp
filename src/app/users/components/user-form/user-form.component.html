@@ -67,12 +67,6 @@
                 </select>
             </div>
 
-            <!-- Grupo único: se hereda del dirigente, no se puede cambiar. -->
-            <div class="form-group">
-                <label class="form-label">Grupo Scout</label>
-                <p class="form-hint">{{ groups()[0]?.name ?? 'Scout YP 62' }} — todos los miembros pertenecen a este grupo.</p>
-            </div>
-
             <!-- Set (solo beneficiarios; secciones de su nivel) -->
             @if (userForm.get('type')?.value !== UserType.DIRIGENTE) {
                 <div class="form-group">

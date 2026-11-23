@@ -3,7 +3,7 @@ import {CommonModule} from '@angular/common';
 import {FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute} from '@angular/router';
 import {SetService} from '../../services/set.service';
-import {GroupService} from '../../../groups/services/group.service';
+import {AuthService} from '../../../auth/services/auth.service';
 import {Set} from '../../models';
 import {AlertComponent, LoadingSpinnerComponent} from '../../../shared/components';
 import {NavigationService} from '../../../shared/services/navigation.service';
@@ -11,6 +11,7 @@ import {UserLevel} from '../../../users/models';
 import {branchNameForLevel, YOUTH_LEVELS, unitNameForLevel} from '../../../shared/utils/level.util';
 import {toSignal} from "@angular/core/rxjs-interop";
 import {catchError, filter, map, of, switchMap} from "rxjs";
+
 
 @Component({
     selector: 'app-set-form',
@@ -35,15 +36,12 @@ export class SetFormComponent {
     setForm: FormGroup<{
         name: FormControl<string>;
         level: FormControl<UserLevel>;
-        groupId: FormControl<string>;
     }> = this.fb.group({
         name: this.fb.control('', {nonNullable: true, validators: [Validators.required]}),
-        level: this.fb.control(UserLevel.LOBATO, {nonNullable: true, validators: [Validators.required]}),
-        groupId: this.fb.control('', {nonNullable: true, validators: [Validators.required]})
+        level: this.fb.control(UserLevel.LOBATO, {nonNullable: true, validators: [Validators.required]})
     });
     private setService = inject(SetService);
-    private groupService = inject(GroupService);
-    groups = toSignal(this.groupService.getGroups(), {initialValue: []});
+    private authService = inject(AuthService);
     private router = inject(NavigationService);
     private route = inject(ActivatedRoute);
     set = toSignal(
@@ -85,6 +83,7 @@ export class SetFormComponent {
 
         const setData: Set = {
             ...this.setForm.getRawValue(),
+            groupId: this.authService.user()?.groupId ?? '',
             createdAt: new Date()
         };
 

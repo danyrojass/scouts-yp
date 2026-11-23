@@ -1,6 +1,16 @@
 # Session State — Scout YP Migration
 
-## Nov 23, 2026 — Año lectivo e histórico (rama `feat/school-year`, SIN merge)
+## Nov 23, 2026 — Sin selector de grupo en los formularios
+
+- `set-form` y `user-form` ya no muestran ni validan el campo `groupId`; `activity-form`
+  nunca lo tuvo. El grupo se toma del usuario autenticado y además los servicios
+  `SetService.createSet` y `UserService.createUser` lo fuerzan en el documento.
+- `UserFormComponent` dejó de inyectar `GroupService` y, al crear/editar una persona,
+  llama a `MembershipService.ensureMembership()` para que rol/nivel/sección queden
+  también en la membresía del año lectivo activo (necesario para `Abrir año` y `/historial`).
+- Tests: 60/60 (3 nuevos para `ensureMembership`). Build de producción OK. Sin cambios en Firestore ni en reglas.
+
+## Nov 23, 2026 — Año lectivo e histórico (PR #23)
 
 - Definiciones confirmadas con el PO: datos actuales = **2026**; las secciones se
   mantienen entre años pero pueden darse de baja; una persona conserva su login y

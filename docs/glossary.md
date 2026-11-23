@@ -94,7 +94,7 @@ chica se deriva de una única constante (`unitNameForLevel`). No existe un enum
 | **Access token** | JWT de corta vida (15 min) en cookie httpOnly. |
 | **Refresh token** | Token de larga vida (7 días) con rotación; cada uso emite uno nuevo. |
 | **Multi-tenant** | Aislamiento por `groupId`; el middleware `requireGroup` lo extrae del JWT. `SUPER_ADMIN` lo indica con `X-Group-Id`. |
-| **Modo grupo único** | Configuración del deploy de Vercel: los datos conservan `group_id`, pero la UI no permite crear grupos ni registrarse y todo alta hereda el `groupId` del dirigente autenticado. |
+| **Modo grupo único** | Configuración del deploy de Vercel: los datos conservan `group_id`, pero la UI no permite crear grupos ni registrarse. Los formularios de sección, actividad y usuario **no muestran selector de grupo**: el alta hereda el `groupId` del dirigente autenticado (lo fuerzan también los servicios). |
 | **tokenVersion** | Contador en `User`; al cambiar rol, grupo o estado se incrementa y los JWT viejos dejan de valer. |
 
 ## Infraestructura
